@@ -1,17 +1,655 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Shred Plan" />
-    <meta name="theme-color" content="#080809" />
-    <title>Shred Plan</title>
-    <script type="module" crossorigin src="./assets/index-Dm1OIiR3.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DEg3DfEZ.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Shred"/>
+<meta name="theme-color" content="#080809"/>
+<link rel="manifest" href="./manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="./icon-192.png"/>
+<title>Shred — AI Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"/>
+<style>
+:root{
+  --bg:#080809;--card:#16161b;--card2:#1c1c22;--border:#292936;
+  --accent:#00e87a;--accent2:#00a855;--text:#ededf2;--text2:#a8a8b8;
+  --muted:#666679;--danger:#ff4d4d;--warn:#f5a623;--blue:#4da8ff;
+  --ai:#a855f7;--ai2:#7c3aed;--aiBg:#a855f714;--aiBorder:#a855f740;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
+.app{min-height:100vh;min-height:100dvh;padding-bottom:calc(88px + env(safe-area-inset-bottom,0))}
+.header{position:sticky;top:0;z-index:10;background:#080809eb;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:calc(env(safe-area-inset-top,0) + 12px) 16px 12px;display:flex;justify-content:space-between;align-items:center}
+.brand-title{letter-spacing:4px;color:var(--accent);font-family:'Bebas Neue';font-size:27px;line-height:1}
+.brand-sub{letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:5px;font-size:11px}
+.page{max-width:880px;margin:0 auto;padding:16px}
+.btn{border:1px solid var(--accent);color:var(--accent);background:#00e87a1a;border-radius:999px;padding:11px 16px;font-weight:800;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.btn.full{width:100%}
+.btn.ghost{border-color:var(--border);color:var(--text2);background:#ffffff0a}
+.btn.danger{border-color:#ff4d4d59;color:var(--danger);background:#ff4d4d17}
+.btn.ai{border-color:var(--aiBorder);color:var(--ai);background:var(--aiBg)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tabs{display:flex;gap:8px;margin-bottom:14px;overflow:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{border:1px solid var(--border);background:var(--card);color:var(--text2);border-radius:999px;padding:11px 14px;font-weight:800;cursor:pointer;font-size:14px;position:relative;white-space:nowrap}
+.tab.active{border-color:var(--accent);color:var(--accent);background:#00e87a14}
+.tab .dot{position:absolute;top:6px;right:8px;width:6px;height:6px;background:var(--accent);border-radius:50%}
+.hero{background:linear-gradient(135deg,var(--card),#1d1d2600);border:1px solid var(--border);border-radius:22px;margin-bottom:14px;padding:20px}
+.badge{border:1px solid var(--accent2);color:var(--accent);letter-spacing:1px;text-transform:uppercase;background:#00e87a1a;border-radius:999px;margin-bottom:10px;padding:4px 10px;font-size:11px;font-weight:800;display:inline-block}
+.badge.ai{border-color:var(--aiBorder);color:var(--ai);background:var(--aiBg)}
+.hero h1{letter-spacing:4px;font-family:'Bebas Neue';font-size:42px;line-height:1}
+.hero p{color:var(--text2);letter-spacing:.5px;margin-top:6px;font-size:13px}
+.bar{position:relative;background:#ffffff12;border-radius:99px;height:7px;margin-top:16px;overflow:hidden}
+.bar.cmp{margin-top:0}
+.bar span{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:99px;transition:width .4s}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;margin-bottom:13px;overflow:hidden}
+.card-head{border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:15px 16px}
+.card-head h2{flex:1;font-size:15px}
+.card-head em{color:var(--muted);font-family:'JetBrains Mono';font-size:12px;font-style:normal}
+.card-body{padding:15px 16px}
+.warmup{border-left:3px solid var(--warn);color:var(--warn);background:#f5a6231a;border-radius:0 10px 10px 0;margin-bottom:10px;padding:10px 12px;font-size:13px}
+.row{display:flex;align-items:center;gap:8px;border-bottom:1px solid #ffffff0d}.row:last-child{border-bottom:none}
+.check-row{cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:12px 0;flex:1}
+.check{border:2px solid #343443;border-radius:9px;flex:0 0 27px;width:27px;height:27px;display:flex;justify-content:center;align-items:center;font-weight:900;transition:all .2s;color:transparent;font-size:14px}
+.check.done{background:var(--accent);border-color:var(--accent);color:#000}
+.check-row b{font-size:14px;font-weight:600}
+.check-row small{color:var(--muted);margin-top:3px;font-family:'JetBrains Mono';font-size:12px;display:block}
+.strike{color:var(--muted);text-decoration:line-through}
+.info-box{white-space:pre-line;color:#b8d4ff;background:#4da8ff1a;border:1px solid #4da8ff40;border-radius:14px;padding:13px;font-size:13px;line-height:1.6}
+.icon-danger{width:34px;height:34px;color:var(--danger);background:#ff4d4d12;border:1px solid #ff4d4d55;border-radius:10px;flex-shrink:0;display:flex;justify-content:center;align-items:center;cursor:pointer}
+.add-box{border:1px dashed var(--border);background:#ffffff06;border-radius:14px;display:flex;gap:8px;margin-top:14px;padding:12px;align-items:center;flex-wrap:wrap}
+input,select,textarea{border:1px solid var(--border);background:#ffffff0a;color:var(--text);border-radius:13px;padding:12px 13px;font-size:16px;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:90px}
+label{color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-size:11px;font-weight:800;display:block;margin:12px 0 4px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px}
+.stat span{text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-size:10px;font-weight:800}
+.stat b{margin-top:8px;font-family:'JetBrains Mono';font-size:24px;display:block}
+.stat small{color:var(--muted);font-size:13px}
+.stat em{color:var(--text2);margin-top:5px;font-size:12px;font-style:normal;display:block}
+.macro-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.macro{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px;text-align:center}
+.macro b{font-family:'JetBrains Mono';font-size:20px;display:block}
+.macro span{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:800}
+.macro.p b{color:#ff7a7a}.macro.c b{color:#ffd166}.macro.f b{color:#4da8ff}
+.log-row{border-bottom:1px solid #ffffff0d;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0}
+.log-row small{color:var(--muted);font-size:12px;display:block;margin-top:3px}
+.log-values{color:var(--accent);display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono';font-size:12px}
+.log-values button{color:var(--danger);background:#ff4d4d1a;border:1px solid #ff4d4d4d;border-radius:8px;width:25px;height:25px;cursor:pointer}
+.month-block{border-top:1px solid #ffffff0f;padding:12px 0}.month-block h3{color:var(--accent);margin-bottom:8px;font-size:14px}
+.week-line{display:grid;grid-template-columns:42px 1fr 44px;align-items:center;gap:10px;padding:9px 0}
+.muted{color:var(--muted)}
+.chart{display:flex;align-items:flex-end;gap:10px;height:170px;padding-top:20px;overflow:auto}
+.chart-col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px;min-width:30px;height:150px}
+.chart-col i{background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:10px 10px 3px 3px;width:18px;display:block}
+.chart-col small{color:var(--muted);font-family:'JetBrains Mono';font-size:10px}
+.hist-card{border:1px solid var(--border);background:#ffffff06;border-radius:13px;display:flex;flex-direction:column;gap:7px;margin-bottom:10px;padding:12px}
+.hist-top{color:var(--accent);display:flex;justify-content:space-between;align-items:center}
+.hist-top span{color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:3px 8px;font-family:'JetBrains Mono';font-size:11px}
+.hist-card small{color:var(--text2);line-height:1.45}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#080809f2;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom,0)}
+nav button{flex:1;background:none;border:none;color:var(--muted);padding:11px 2px 9px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;cursor:pointer}
+nav button span{display:block;font-size:18px;margin-bottom:3px}
+nav button.active{color:var(--accent)}
+nav button.ai-tab.active{color:var(--ai)}
+/* AI FAB + panel */
+.ai-fab{position:fixed;bottom:100px;right:18px;z-index:30;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--ai2),var(--ai));border:none;cursor:pointer;box-shadow:0 4px 24px #a855f740;display:flex;align-items:center;justify-content:center;font-size:22px}
+.overlay{position:fixed;inset:0;background:#00000070;z-index:35}
+.ai-panel{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--bg);border-top:1px solid var(--aiBorder);border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;box-shadow:0 -8px 40px #a855f720}
+.ai-panel.open{transform:translateY(0)}
+.ai-head{padding:16px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ai-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--ai2),var(--ai));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ai-head h3{font-size:15px;font-weight:800}
+.ai-head p{font-size:10px;color:var(--ai);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.ai-toggle{display:flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-size:10px;font-weight:800;letter-spacing:.5px;cursor:pointer;text-transform:uppercase}
+.ai-toggle .d{width:7px;height:7px;border-radius:50%}
+.ai-x{width:32px;height:32px;border-radius:50%;background:#ffffff0a;border:1px solid var(--border);color:var(--text2);cursor:pointer;font-size:16px}
+.ai-sugg{display:flex;gap:7px;overflow-x:auto;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;scrollbar-width:none}.ai-sugg::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--aiBorder);background:var(--aiBg);color:var(--ai);border-radius:999px;padding:6px 13px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
+.ai-msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;display:flex;flex-direction:column;gap:4px}
+.msg.ai{align-self:flex-start}.msg.user{align-self:flex-end}
+.bubble{padding:11px 14px;border-radius:16px;font-size:14px;line-height:1.55;white-space:pre-wrap}
+.msg.ai .bubble{background:var(--aiBg);border:1px solid var(--aiBorder);border-bottom-left-radius:4px}
+.msg.user .bubble{background:#00e87a18;border:1px solid #00e87a30;border-bottom-right-radius:4px}
+.msg-time{font-size:10px;color:var(--muted);font-family:'JetBrains Mono'}
+.msg.user .msg-time{text-align:right}
+.applied{background:#1a1a26;border:1px solid var(--aiBorder);border-radius:12px;padding:10px 12px;margin-top:6px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ai);font-weight:700}
+.action-card{background:#1a1a26;border:1px solid var(--aiBorder);border-radius:12px;padding:12px 14px;margin-top:6px;font-size:13px}
+.action-card .lbl{color:var(--ai);font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.action-row{display:flex;gap:8px;margin-top:8px}
+.typing{display:flex;gap:5px;padding:4px 0}.typing span{width:7px;height:7px;background:var(--ai);border-radius:50%;animation:td 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,80%,100%{transform:scale(.7);opacity:.4}40%{transform:scale(1);opacity:1}}
+.ai-input{padding:12px 14px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0));border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
+.ai-input textarea{flex:1;border:1px solid var(--aiBorder);min-height:44px;max-height:120px;resize:none;font-size:15px}
+.ai-input textarea:focus{border-color:var(--ai)}
+.send{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--ai2),var(--ai));border:none;color:#fff;cursor:pointer;font-size:18px;flex-shrink:0}
+.send:disabled{opacity:.4}
+.ai-banner{background:linear-gradient(135deg,#1a1028,#12101c);border:1px solid var(--aiBorder);border-radius:16px;padding:14px 16px;margin-bottom:13px;display:flex;align-items:center;gap:12px;cursor:pointer}
+/* Onboarding */
+.onb{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:24px;max-width:520px;margin:0 auto}
+.onb h1{font-family:'Bebas Neue';font-size:54px;letter-spacing:5px;color:var(--accent);line-height:.95}
+.onb .sub{color:var(--text2);margin:8px 0 28px;font-size:15px;line-height:1.5}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:80px;border:1px solid var(--border);background:var(--card);color:var(--text2);border-radius:13px;padding:13px 10px;font-weight:700;cursor:pointer;font-size:14px}
+.seg button.sel{border-color:var(--accent);color:var(--accent);background:#00e87a14}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:24px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--border)}.dots i.on{background:var(--accent);width:20px;border-radius:99px}
+.result-cal{font-family:'JetBrains Mono';font-size:48px;color:var(--accent);text-align:center;margin:8px 0}
+.pill{display:inline-block;background:#ffffff0a;border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text2);margin:3px}
+.link{color:var(--ai);text-decoration:none;border-bottom:1px solid var(--aiBorder)}
+@media(max-width:560px){.hero h1{font-size:38px}.macro-grid{gap:8px}.onb h1{font-size:44px}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+import { computeTargets, retargetForWeight, weeksToGoal, bmi, ACTIVITY, GOALS,
+         lbToKg, kgToLb, ftInToCm, cmToFtIn } from "./engine.js";
+import { PROVIDERS, loadAISettings, saveAISettings, clearAISettings, aiChat, testKey } from "./ai.js";
+
+// ── PLAN (same for everyone) ─────────────────────────────────
+const PLAN = [
+  {name:"Monday",short:"Mon",type:"Push Day",icon:"💪",warmup:"5–7 min treadmill + shoulder rotations",
+   exercises:[["Bench Press","4 × 6–8"],["Incline DB Press","3 × 8–10"],["Seated Shoulder Press","3 × 8–10"],["Lateral Raises","4 × 15–20"],["Cable Chest Fly","3 × 12–15"],["Triceps Pushdown","3 × 12–15"]],
+   cardio:"Incline treadmill — 20 min · Incline 8–12 · 4.5–5.5 km/h",
+   meals:[["Oats + whey OR eggs + toast","planned meal"],["Protein + rotis + curd + salad","planned meal"],["Banana pre-workout","planned meal"],["Protein-heavy dinner","planned meal"]]},
+  {name:"Tuesday",short:"Tue",type:"Pull Day",icon:"🔙",
+   exercises:[["Lat Pulldown","4 × 8–12"],["Seated Cable Row","3 × 8–12"],["One-Arm DB Row","3 × 10/side"],["Face Pulls","3 × 15–20"],["Dumbbell Curl","3 × 10–12"],["Hammer Curl","3 × 10–12"]],
+   cardio:"Incline treadmill — 20 min · Incline 8–12",
+   meals:[["Oats + whey OR eggs + toast","planned meal"],["Chicken/paneer rice bowl + salad","planned meal"],["Fruit + black coffee pre-workout","planned meal"],["Dal/eggs/chicken + roti + vegetables","planned meal"]]},
+  {name:"Wednesday",short:"Wed",type:"Legs + Core",icon:"🦵",
+   exercises:[["Squat / Leg Press","4 × 8–10"],["Romanian Deadlift","3 × 8–10"],["Leg Curl","3 × 10–15"],["Calf Raises","4 × 15–20"],["Hanging Knee Raises","3 × 10–15"],["Plank","3 × 45–60s"]],
+   cardio:"Optional easy walk 10–15 min.",
+   meals:[["Oats + whey OR eggs + toast","planned meal"],["Protein + rotis + curd + salad","planned meal"],["Banana / dates pre-workout","planned meal"],["High-protein dinner + vegetables","planned meal"]]},
+  {name:"Thursday",short:"Thu",type:"Cardio + Mobility",icon:"🚶",
+   exercises:[["Cat-Cow","10 reps"],["Hip Flexor Stretch","45s/side"],["Glute Bridges","2 × 15"],["Dead Bug","2 × 10/side"],["Wall Slides","2 × 12"]],
+   cardio:"Incline walk — 35–45 min, moderate.",
+   meals:[["Light protein breakfast","planned meal"],["Balanced lunch: protein + carbs + salad","planned meal"],["Fruit / curd snack","planned meal"],["Low-oil dinner + protein","planned meal"]]},
+  {name:"Friday",short:"Fri",type:"Upper Aesthetic",icon:"✨",
+   exercises:[["Incline Bench Press","4 × 6–10"],["Lat Pulldown","4 × 8–12"],["DB Shoulder Press","3 × 8–10"],["Cable Row","3 × 10–12"],["Lateral Raises","5 × 15–20"],["Biceps Curl","3 × 10–12"]],
+   cardio:"Incline treadmill — 20–25 min.",
+   meals:[["Oats + whey OR eggs + toast","planned meal"],["Protein + rice/roti + salad","planned meal"],["Banana pre-workout","planned meal"],["Protein-heavy dinner","planned meal"]]},
+  {name:"Saturday",short:"Sat",type:"Conditioning + Abs",icon:"🔥",
+   exercises:[["Incline Treadmill","30 min"],["Cable Crunch","3 × 12–15"],["Leg Raises","3 × 10–15"],["Russian Twists","3 × 20"],["Push-ups","3 × failure"]],
+   cardio:"Cardio first, then abs.",
+   meals:[["High-protein breakfast","planned meal"],["Lean lunch + salad","planned meal"],["Hydration + fruit snack","planned meal"],["Controlled dinner, no fried snacks","planned meal"]]},
+  {name:"Sunday",short:"Sun",type:"Rest + Progress",icon:"😴",exercises:[],
+   cardio:"8,000–10,000 steps. Light stretching.",
+   meals:[["Normal breakfast, high protein","planned meal"],["Balanced lunch","planned meal"],["Light snack / fruit","planned meal"],["Early light dinner","planned meal"]]},
+];
+const HABITS = [["steps","👟","10,000 steps"],["water","💧","Hit water goal"],["protein","🥩","Hit protein goal"],["sleep","😴","7+ hours sleep"],["calories","🔥","Stay in calorie target"],["nosugar","🚫","No sugar / fried snacks"]];
+
+// ── utils ────────────────────────────────────────────────────
+const todayIdx=()=>{const d=new Date().getDay();return d===0?6:d-1;};
+const dstr=(d=new Date())=>d.toISOString().slice(0,10);
+const fmtD=d=>new Date(d+"T12:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+const fmtM=d=>new Date(d+"T12:00:00").toLocaleDateString("en-IN",{month:"long",year:"numeric"});
+const fmtT=d=>(d instanceof Date?d:new Date(d)).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
+const load=(k,def)=>{try{return JSON.parse(localStorage.getItem(k))??def}catch{return def}};
+const save_=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const wkStart=()=>{const t=new Date();t.setHours(12,0,0,0);const n=t.getDay();t.setDate(t.getDate()-n+(n===0?-6:1));return t;};
+const dayDate=i=>{const t=wkStart();t.setDate(t.getDate()+i);return dstr(t);};
+const blank=(date,di)=>({date,dayIdx:di,doneEx:{},doneMeal:{},doneHab:{},delEx:[],delMeal:[],custEx:[],custMeal:[],note:""});
+const getLog=(L,date,di)=>L[date]||blank(date,di);
+const exsOf=(di,log)=>[...PLAN[di].exercises.map((e,i)=>({id:`p_ex_${i}`,name:e[0],sets:e[1],planned:true})),...(log.custEx||[])].filter(e=>!(log.delEx||[]).includes(e.id));
+const mealsOf=(di,log)=>[...(PLAN[di].meals||[]).map((m,i)=>({id:`p_meal_${i}`,name:m[0],sets:m[1]||"planned meal",planned:true})),...(log.custMeal||[])].filter(m=>!(log.delMeal||[]).includes(m.id));
+const prog=(di,log)=>{const ex=exsOf(di,log), meals=mealsOf(di,log), tot=ex.length+meals.length+HABITS.length;if(!tot)return 0;const d=ex.filter(e=>log.doneEx?.[e.id]).length+meals.filter(m=>log.doneMeal?.[m.id]).length+HABITS.filter(([k])=>log.doneHab?.[k]).length;return Math.round(d/tot*100);};
+const weekProg=L=>PLAN.map((_,i)=>prog(i,getLog(L,dayDate(i),i)));
+const avg7=B=>{const w=[...B].filter(l=>l.weight).sort((a,b)=>a.date.localeCompare(b.date)).slice(-7);return w.length?(w.reduce((s,l)=>s+ +l.weight,0)/w.length).toFixed(1):null;};
+const groupM=a=>[...a].sort((x,y)=>x.date.localeCompare(y.date)).reduce((o,l)=>{const m=fmtM(l.date);(o[m]||=[]).push(l);return o;},{});
+
+// ── global state ─────────────────────────────────────────────
+let st = {
+  profile: load("sp_profile", null),
+  screen: "today",
+  dayIdx: todayIdx(),
+  L: load("sp_logs", {}),
+  B: load("sp_body", []),
+  ai: loadAISettings(),
+  aiOpen: false,
+  aiMsgs: [{role:"ai",text:"I'm your Personal Trainer AI 🤖\n\nI can log workouts, tweak your plan, log your weight, and read your progress — all through chat. I just need a free API key (Settings → AI) to start.\n\nWhat do you need?",time:new Date()}],
+  aiInput:"", aiLoading:false, agent:true,
+  onbStep: 0, onbDraft: { units:"metric", sex:"male", activity:"moderate", goal:"cut" },
+};
+function set(p, noSave){ st={...st,...p}; if(!noSave){ save_("sp_logs",st.L); save_("sp_body",st.B); save_("sp_profile",st.profile);} render(); }
+
+// targets recomputed from latest weight if available
+function targets(){
+  if(!st.profile) return null;
+  const latest = st.B.length ? [...st.B].sort((a,b)=>a.date.localeCompare(b.date)).at(-1)?.weight : null;
+  return retargetForWeight(st.profile, latest || st.profile.weightKg);
+}
+
+// ── log mutations ────────────────────────────────────────────
+function mut(date,di,fn){const L=clone(st.L);L[date]={...fn(getLog(L,date,di)),date,dayIdx:di};set({L});}
+const toggle=(date,di,field,id)=>mut(date,di,l=>({...l,[field]:{...l[field],[id]:!l[field]?.[id]}}));
+function upBody(e){set({B:[...st.B.filter(l=>l.date!==e.date),e].sort((a,b)=>a.date.localeCompare(b.date))});}
+function rmBody(d){set({B:st.B.filter(l=>l.date!==d)});}
+
+// ============================================================
+// AI AGENT
+// ============================================================
+const SYSTEM = () => {
+  const t = targets();
+  return `You are "Personal Trainer AI" inside the Shred fitness app. Expert, direct, motivating coach.
+
+USER PROFILE: ${st.profile?JSON.stringify(st.profile):"not set"}
+CALCULATED TARGETS (offline math, authoritative): ${t?`${t.calories} kcal/day, ${t.proteinG}g protein, ${t.carbG}g carbs, ${t.fatG}g fat, ${t.waterMl}ml water. Goal: ${t.goalLabel}. Est ${t.weeklyKg}kg/week.`:"not set"}
+
+Each user message includes a JSON APP STATE with today's exercises, meals, habits (each has a real id/key), weekly progress, and recent body logs. Use real ids. You should recommend exercises based on the user's goal/body target, weak points, schedule, and progress; do not blindly keep the default plan when the user asks for better training.
+
+You are an AGENT — you operate the app via actions. Append ONE action at the very END of your reply, raw, last line, format:
+ACTION:{"type":"<type>","payload":<payload>}
+
+Types:
+- log_workout {date,exerciseIds:[]}  | untick_workout {date,exerciseIds:[]}
+- log_meal {date,mealIds:[]}          | untick_meal {date,mealIds:[]}
+- log_habit {date,habitKeys:[]}       | untick_habit {date,habitKeys:[]}
+- add_exercise {date,name,sets}        | remove_exercise {date,exerciseId}
+- add_meal {date,name,sets}            | remove_meal {date,mealId}
+- log_body {date,weight,waist?,note?}
+- add_note {date,note}                 | clear_day {date}
+- goto_day {dayIdx:0-6}                | goto_screen {screen:"today|body|progress|plan|settings"}
+
+Rules: ONE action max, only when it does what the user asked; text first, ACTION last. Use today's date from APP STATE unless told otherwise. Keep replies under 110 words. Never invent weight numbers. Reference the user's real calorie/macro targets when relevant.`;
+};
+
+function aiContext(){
+  const date=dayDate(st.dayIdx), log=getLog(st.L,date,st.dayIdx), p=PLAN[st.dayIdx], t=targets();
+  const latest=st.B.length?[...st.B].sort((a,b)=>a.date.localeCompare(b.date)).at(-1):null;
+  return {today:{day:p.name,type:p.type,date,exercises:exsOf(st.dayIdx,log).map(e=>({id:e.id,name:e.name,sets:e.sets,done:!!log.doneEx?.[e.id]})),meals:mealsOf(st.dayIdx,log).map(m=>({id:m.id,name:m.name,done:!!log.doneMeal?.[m.id]})),habits:HABITS.map(([k,,l])=>({key:k,label:l,done:!!log.doneHab?.[k]})),note:log.note||""},
+    targets:t?{calories:t.calories,protein:t.proteinG,carbs:t.carbG,fat:t.fatG}:null,
+    latestWeight:latest?.weight||null, goalWeight:st.profile?.goalKg||null,
+    weeklyProgress:PLAN.map((pp,i)=>({day:pp.short,pct:prog(i,getLog(st.L,dayDate(i),i))}))};
+}
+
+const describe=a=>{const p=a.payload||{};switch(a.type){
+  case"log_workout":return`Mark ${p.exerciseIds?.length} exercise(s) done`;
+  case"untick_workout":return`Un-tick ${p.exerciseIds?.length} exercise(s)`;
+  case"log_meal":return`Mark ${p.mealIds?.length} meal(s) done`;
+  case"untick_meal":return`Un-tick ${p.mealIds?.length} meal(s)`;
+  case"log_habit":return`Check habits: ${p.habitKeys?.join(", ")}`;
+  case"untick_habit":return`Un-check: ${p.habitKeys?.join(", ")}`;
+  case"add_exercise":return`Add "${p.name} — ${p.sets}"`;
+  case"remove_exercise":return`Remove an exercise`;
+  case"add_meal":return`Add meal "${p.name}"`;
+  case"remove_meal":return`Remove a meal`;
+  case"log_body":return`Log ${p.weight}kg${p.waist?`, ${p.waist}"`:""}`;
+  case"add_note":return`Set today's note`;
+  case"clear_day":return`Clear ${p.date}`;
+  case"goto_day":return`Open ${PLAN[p.dayIdx]?.name}`;
+  case"goto_screen":return`Open ${p.screen}`;
+  default:return a.type;}};
+
+function execAction(a){
+  const p=a.payload||{}, date=p.date||dayDate(st.dayIdx);
+  const d=new Date(date+"T12:00:00").getDay(), di=d===0?6:d-1;
+  const setK=(o,ks,v)=>({...o,...Object.fromEntries((ks||[]).map(k=>[k,v]))});
+  switch(a.type){
+    case"log_workout":mut(date,di,l=>({...l,doneEx:setK(l.doneEx,p.exerciseIds,true)}));break;
+    case"untick_workout":mut(date,di,l=>({...l,doneEx:setK(l.doneEx,p.exerciseIds,false)}));break;
+    case"log_meal":mut(date,di,l=>({...l,doneMeal:setK(l.doneMeal,p.mealIds,true)}));break;
+    case"untick_meal":mut(date,di,l=>({...l,doneMeal:setK(l.doneMeal,p.mealIds,false)}));break;
+    case"log_habit":mut(date,di,l=>({...l,doneHab:setK(l.doneHab,p.habitKeys,true)}));break;
+    case"untick_habit":mut(date,di,l=>({...l,doneHab:setK(l.doneHab,p.habitKeys,false)}));break;
+    case"add_exercise":mut(date,di,l=>({...l,custEx:[...(l.custEx||[]),{id:"ai_"+Date.now(),name:p.name,sets:p.sets||"—",planned:false}]}));break;
+    case"remove_exercise":mut(date,di,l=>({...l,custEx:(l.custEx||[]).filter(x=>x.id!==p.exerciseId),delEx:[...(l.delEx||[]),p.exerciseId]}));break;
+    case"add_meal":mut(date,di,l=>({...l,custMeal:[...(l.custMeal||[]),{id:"meal_"+Date.now(),name:p.name,sets:p.sets||"custom meal",planned:false}]}));break;
+    case"remove_meal":mut(date,di,l=>({...l,custMeal:(l.custMeal||[]).filter(x=>x.id!==p.mealId),delMeal:[...(l.delMeal||[]),p.mealId]}));break;
+    case"log_body":upBody({date,weight:+p.weight,waist:p.waist||"",note:p.note||""});break;
+    case"add_note":mut(date,di,l=>({...l,note:p.note}));break;
+    case"clear_day":mut(date,di,l=>({...l,doneEx:{},doneMeal:{},doneHab:{}}));break;
+    case"goto_day":set({dayIdx:p.dayIdx,screen:"today"});break;
+    case"goto_screen":set({screen:p.screen,aiOpen:p.screen==="settings"?false:st.aiOpen});break;
+  }
+}
+
+async function sendAI(text){
+  if(!text.trim()||st.aiLoading)return;
+  if(!st.ai?.apiKey){
+    set({aiMsgs:[...st.aiMsgs,{role:"user",text,time:new Date()},{role:"ai",text:"⚠️ No API key yet. Open Settings → AI and paste a free key (Groq or Gemini). Takes 30 seconds.",time:new Date()}],aiInput:""},true);
+    return;
+  }
+  const userMsg={role:"user",text:text.trim(),time:new Date()};
+  set({aiMsgs:[...st.aiMsgs,userMsg],aiInput:"",aiLoading:true},true);
+  try{
+    const hist=[...st.aiMsgs,userMsg].map(m=>({role:m.role==="ai"?"assistant":"user",content:m.text}));
+    // attach live state to last user msg
+    hist[hist.length-1]={role:"user",content:`[APP STATE]\n${JSON.stringify(aiContext())}\n\n[USER]\n${userMsg.text}`};
+    const raw=await aiChat({system:SYSTEM(),messages:hist,settings:st.ai});
+    const m=raw.match(/ACTION:\s*(\{[\s\S]*\})\s*$/);
+    let action=null,clean=raw;
+    if(m){clean=raw.slice(0,m.index).trim();try{action=JSON.parse(m[1]);}catch{}}
+    if(!clean)clean="Done. ✅";
+    if(action&&st.agent){execAction(action);set({aiMsgs:[...st.aiMsgs,{role:"ai",text:clean,time:new Date(),applied:action}],aiLoading:false},true);}
+    else set({aiMsgs:[...st.aiMsgs,{role:"ai",text:clean,time:new Date(),action}],aiLoading:false},true);
+  }catch(e){
+    set({aiMsgs:[...st.aiMsgs,{role:"ai",text:`⚠️ ${e.message}`,time:new Date()}],aiLoading:false},true);
+  }
+}
+
+// ============================================================
+// RENDER HELPERS
+// ============================================================
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const bar=(pct,cmp)=>`<div class="bar${cmp?' cmp':''}"><span style="width:${pct}%"></span></div>`;
+const stat=(label,val,unit,delta)=>`<div class="stat"><span>${label}</span><b>${val}${unit?`<small style="font-size:13px;margin-left:3px">${unit}</small>`:''}</b>${delta?`<em>${delta}</em>`:''}</div>`;
+const sect=(title,icon,badge,body)=>`<div class="card"><div class="card-head"><span>${icon}</span><h2>${title}</h2>${badge?`<em>${badge}</em>`:''}</div><div class="card-body">${body}</div></div>`;
+
+// ============================================================
+// ONBOARDING
+// ============================================================
+function Onboarding(){
+  const d=st.onbDraft, step=st.onbStep;
+  const upd=p=>set({onbDraft:{...st.onbDraft,...p}},true);
+
+  if(step===0) return `<div class="onb">
+    <h1>SHRED</h1>
+    <p class="sub">Your personal AI fitness coach. Tell me about you and I'll build your plan + calculate your exact daily calories and macros.</p>
+    <button class="btn full" onclick="ONB.next()">Get Started →</button>
+    <div class="dots"><i class="on"></i><i></i><i></i><i></i></div>
+  </div>`;
+
+  if(step===1) return `<div class="onb">
+    <span class="badge">Step 1 of 3</span>
+    <h1 style="font-size:36px">YOUR BODY</h1>
+    <label>Units</label>
+    <div class="seg">
+      <button class="${d.units==='metric'?'sel':''}" onclick="ONB.set({units:'metric'})">Metric (kg/cm)</button>
+      <button class="${d.units==='imperial'?'sel':''}" onclick="ONB.set({units:'imperial'})">Imperial (lb/ft)</button>
+    </div>
+    <label>Sex (for BMR formula)</label>
+    <div class="seg">
+      <button class="${d.sex==='male'?'sel':''}" onclick="ONB.set({sex:'male'})">Male</button>
+      <button class="${d.sex==='female'?'sel':''}" onclick="ONB.set({sex:'female'})">Female</button>
+    </div>
+    <div class="two">
+      <div><label>Age</label><input id="o_age" type="number" inputmode="numeric" placeholder="28" value="${d.age||''}"></div>
+      <div><label>Weight (${d.units==='metric'?'kg':'lb'})</label><input id="o_w" type="number" inputmode="decimal" step="0.1" placeholder="${d.units==='metric'?'85':'187'}" value="${d.wInput||''}"></div>
+    </div>
+    ${d.units==='metric'
+      ? `<label>Height (cm)</label><input id="o_h" type="number" inputmode="numeric" placeholder="175" value="${d.hCm||''}">`
+      : `<div class="two"><div><label>Height (ft)</label><input id="o_ft" type="number" inputmode="numeric" placeholder="5" value="${d.hFt||''}"></div><div><label>(in)</label><input id="o_in" type="number" inputmode="numeric" placeholder="9" value="${d.hIn||''}"></div></div>`}
+    <button class="btn full" style="margin-top:20px" onclick="ONB.step1()">Continue →</button>
+    <div class="dots"><i></i><i class="on"></i><i></i><i></i></div>
+  </div>`;
+
+  if(step===2) return `<div class="onb">
+    <span class="badge">Step 2 of 3</span>
+    <h1 style="font-size:36px">YOUR GOAL</h1>
+    <label>What do you want?</label>
+    <div class="seg" style="flex-direction:column">
+      ${Object.entries(GOALS).map(([k,g])=>`<button class="${d.goal===k?'sel':''}" style="text-align:left" onclick="ONB.set({goal:'${k}'})">${g.label} <span style="color:var(--muted);font-weight:400;font-size:12px">· ${g.desc}</span></button>`).join('')}
+    </div>
+    <label>Target weight (${d.units==='metric'?'kg':'lb'})</label>
+    <input id="o_goal" type="number" inputmode="decimal" step="0.1" placeholder="${d.units==='metric'?'79':'174'}" value="${d.goalInput||''}">
+    <button class="btn full" style="margin-top:20px" onclick="ONB.step2()">Continue →</button>
+    <div class="dots"><i></i><i></i><i class="on"></i><i></i></div>
+  </div>`;
+
+  if(step===3) return `<div class="onb">
+    <span class="badge">Step 3 of 3</span>
+    <h1 style="font-size:36px">ACTIVITY</h1>
+    <label>How active are you?</label>
+    <div class="seg" style="flex-direction:column">
+      ${Object.entries(ACTIVITY).map(([k,a])=>`<button class="${d.activity===k?'sel':''}" style="text-align:left" onclick="ONB.set({activity:'${k}'})">${a.label}</button>`).join('')}
+    </div>
+    <button class="btn full" style="margin-top:20px" onclick="ONB.finish()">Build My Plan ⚡</button>
+    <div class="dots"><i></i><i></i><i></i><i class="on"></i></div>
+  </div>`;
+}
+
+window.ONB = {
+  set:(p)=>set({onbDraft:{...st.onbDraft,...p}},true),
+  next:()=>set({onbStep:1},true),
+  step1:()=>{
+    const d=st.onbDraft;
+    const age=+document.getElementById('o_age').value;
+    const wRaw=+document.getElementById('o_w').value;
+    let hCm;
+    if(d.units==='metric'){hCm=+document.getElementById('o_h').value;}
+    else{hCm=ftInToCm(+document.getElementById('o_ft').value||0,+document.getElementById('o_in').value||0);}
+    const weightKg = d.units==='metric'?wRaw:lbToKg(wRaw);
+    if(!age||!weightKg||!hCm){alert("Fill in age, weight and height.");return;}
+    set({onbDraft:{...d,age,weightKg,heightCm:hCm,wInput:wRaw,hCm:d.units==='metric'?hCm:d.hCm,hFt:document.getElementById('o_ft')?.value,hIn:document.getElementById('o_in')?.value},onbStep:2},true);
+  },
+  step2:()=>{
+    const d=st.onbDraft;
+    const gRaw=+document.getElementById('o_goal').value;
+    if(!gRaw){alert("Enter a target weight.");return;}
+    const goalKg=d.units==='metric'?gRaw:lbToKg(gRaw);
+    set({onbDraft:{...d,goalKg,goalInput:gRaw},onbStep:3},true);
+  },
+  finish:()=>{
+    const d=st.onbDraft;
+    const profile={weightKg:d.weightKg,heightCm:d.heightCm,age:d.age,sex:d.sex,activity:d.activity,goal:d.goal,goalKg:d.goalKg,units:d.units,createdAt:new Date().toISOString()};
+    // seed first body log with starting weight
+    const B=[...st.B.filter(l=>l.date!==dstr()),{date:dstr(),weight:d.weightKg,waist:"",note:"Starting weight"}];
+    set({profile,B,screen:"today"});
+  },
+};
+
+// ============================================================
+// SCREENS
+// ============================================================
+function TodayScreen(){
+  const di=st.dayIdx, p=PLAN[di], date=dayDate(di), log=getLog(st.L,date,di);
+  const ex=exsOf(di,log), meals=mealsOf(di,log), t=targets();
+  const dEx=ex.filter(e=>log.doneEx?.[e.id]).length, dMeal=meals.filter(m=>log.doneMeal?.[m.id]).length, dH=HABITS.filter(([k])=>log.doneHab?.[k]).length;
+  const pct=prog(di,log);
+
+  const tabs=PLAN.map((pp,i)=>`<button class="tab${i===di?' active':''}" onclick="set({dayIdx:${i}})">${pp.short}${i===todayIdx()?'<span class="dot"></span>':''}</button>`).join('');
+  const exRows=ex.map(e=>`<div class="row"><div class="check-row" onclick="toggle('${date}',${di},'doneEx','${e.id}')"><div class="check${log.doneEx?.[e.id]?' done':''}">✓</div><div><b class="${log.doneEx?.[e.id]?'strike':''}">${esc(e.name)}</b><small>${esc(e.sets)}</small></div></div>${!e.planned?`<div class="icon-danger" onclick="mut('${date}',${di},l=>({...l,custEx:(l.custEx||[]).filter(x=>x.id!=='${e.id}'),delEx:[...(l.delEx||[]),'${e.id}']}))">🗑</div>`:''}</div>`).join('');
+  const mealRows=meals.map(m=>`<div class="row"><div class="check-row" onclick="toggle('${date}',${di},'doneMeal','${m.id}')"><div class="check${log.doneMeal?.[m.id]?' done':''}">✓</div><div><b class="${log.doneMeal?.[m.id]?'strike':''}">${esc(m.name)}</b><small>${esc(m.sets||'planned meal')}</small></div></div>${!m.planned?`<div class="icon-danger" onclick="mut('${date}',${di},l=>({...l,custMeal:(l.custMeal||[]).filter(x=>x.id!=='${m.id}'),delMeal:[...(l.delMeal||[]),'${m.id}']}))">🗑</div>`:''}</div>`).join('');
+  const habRows=HABITS.map(([k,ic,lb])=>`<div class="check-row" onclick="toggle('${date}',${di},'doneHab','${k}')"><div class="check${log.doneHab?.[k]?' done':''}">✓</div><b class="${log.doneHab?.[k]?'strike':''}">${ic} ${lb}</b></div>`).join('');
+
+  return `<main class="page">
+    <div class="tabs">${tabs}</div>
+    <div class="ai-banner" onclick="set({aiOpen:true})"><span style="font-size:26px">🤖</span><div><div style="font-weight:800;font-size:14px">Personal Trainer AI</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Log workouts, tweak the plan, track weight — by chat</div><span class="badge ai" style="margin-top:6px;margin-bottom:0;font-size:10px">${st.ai?.apiKey?'CONNECTED':'TAP TO CONNECT'}</span></div></div>
+    <section class="hero">
+      <span class="badge">${p.icon} ${p.type}</span>
+      <h1>${p.name.toUpperCase()}</h1>
+      <p>${fmtD(date)} · ${dEx}/${ex.length} exercises · ${dMeal}/${meals.length} meals · ${dH}/${HABITS.length} habits</p>
+      ${bar(pct)}
+    </section>
+    ${t?sect("Today's Targets","🎯","",`
+      <div style="text-align:center;margin-bottom:12px"><div style="font-family:'JetBrains Mono';font-size:40px;color:var(--accent)">${t.calories}</div><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:1px">calories · ${t.goalLabel}</div></div>
+      <div class="macro-grid"><div class="macro p"><b>${t.proteinG}g</b><span>Protein</span></div><div class="macro c"><b>${t.carbG}g</b><span>Carbs</span></div><div class="macro f"><b>${t.fatG}g</b><span>Fat</span></div></div>
+      <div class="info-box" style="margin-top:12px">💧 Water goal: ${(t.waterMl/1000).toFixed(1)} L · Est. ${t.weeklyKg>0?'+':''}${t.weeklyKg} kg/week</div>`):''}
+    ${p.warmup?sect("Warmup","🔥","",`<div class="warmup">${p.warmup}</div>`):''}
+    ${sect("Workout Log","🏋️",`${dEx}/${ex.length}`,`${exRows||'<p class="muted">Rest day — no lifting.</p>'}
+      <div class="add-box"><input id="nx" placeholder="Exercise" style="flex:2"><input id="nxs" placeholder="3 × 12" style="flex:1;min-width:80px"><button class="btn" onclick="(()=>{const n=document.getElementById('nx').value.trim();if(n)mut('${date}',${di},l=>({...l,custEx:[...(l.custEx||[]),{id:'c_'+Date.now(),name:n,sets:document.getElementById('nxs').value.trim()||'—',planned:false}]}))})()">+</button></div>`)}
+    ${sect("Food Log","🍴",`${dMeal}/${meals.length}`,`${mealRows||'<p class="muted">No meals planned.</p>'}
+      <div class="add-box"><input id="nm" placeholder="Add what you ate, e.g. chicken rice bowl" style="flex:2"><input id="nms" placeholder="meal note" style="flex:1;min-width:80px"><button class="btn" onclick="(()=>{const n=document.getElementById('nm').value.trim();if(n)mut('${date}',${di},l=>({...l,custMeal:[...(l.custMeal||[]),{id:'m_'+Date.now(),name:n,sets:document.getElementById('nms').value.trim()||'custom meal',planned:false}]}))})()">+</button></div>`)}
+    ${p.cardio?sect("Cardio","🚶","",`<div class="info-box">${p.cardio}</div>`):''}
+    ${sect("Daily Habits","📋",`${dH}/${HABITS.length}`,habRows)}
+    ${sect("Note","📝","",`<textarea placeholder="How did today go?" onchange="mut('${date}',${di},l=>({...l,note:this.value}))">${esc(log.note||'')}</textarea>`)}
+  </main>`;
+}
+
+function BodyScreen(){
+  const latest=st.B.length?[...st.B].sort((a,b)=>a.date.localeCompare(b.date)).at(-1):null;
+  const a7=avg7(st.B), byM=groupM(st.B), t=targets();
+  const hist=Object.entries(byM).reverse().map(([m,es])=>`<div class="month-block"><h3>${m}</h3>${[...es].reverse().map(l=>`<div class="log-row"><div><b>${fmtD(l.date)}</b>${l.note?`<small>${esc(l.note)}</small>`:''}</div><div class="log-values">${l.weight?`<span>${l.weight} kg</span>`:''}${l.waist?`<span>${l.waist}"</span>`:''}<button onclick="rmBody('${l.date}')">✕</button></div></div>`).join('')}</div>`).join('');
+  return `<main class="page">
+    <section class="hero"><span class="badge">Tracking</span><h1>BODY</h1><p>Log weight regularly — your calories auto-adjust.</p></section>
+    <div class="stats-grid">
+      ${stat("Current",latest?.weight||st.profile.weightKg,"kg",`${((latest?.weight||st.profile.weightKg)-st.profile.weightKg).toFixed(1)} kg from start`)}
+      ${stat("7-Day Avg",a7||"—","kg","smoother signal")}
+    </div>
+    <div class="ai-banner" onclick="set({aiOpen:true});setTimeout(()=>sendAI('Analyse my weight trend and tell me if I am on track'),300)"><span style="font-size:26px">📊</span><div><div style="font-weight:800;font-size:14px">Ask AI to analyse</div><div style="font-size:12px;color:var(--text2)">Personalised insight from your data</div></div></div>
+    ${sect("Add / Update","⚖️","",`
+      <label>Date</label><input id="b_date" type="date" value="${dstr()}">
+      <label>Weight (kg)</label><input id="b_w" type="number" inputmode="decimal" step="0.1" placeholder="e.g. 84.8">
+      <label>Waist (in) — optional</label><input id="b_waist" type="number" inputmode="decimal" step="0.1" placeholder="optional">
+      <label>Note</label><input id="b_note" placeholder="morning weigh-in">
+      <button class="btn full" style="margin-top:14px" onclick="(()=>{const w=+document.getElementById('b_w').value;if(!w){alert('Enter weight');return;}upBody({date:document.getElementById('b_date').value,weight:w,waist:document.getElementById('b_waist').value||'',note:document.getElementById('b_note').value||''})})()">Save</button>`)}
+    ${sect("History","📋","",hist||'<p class="muted">No logs yet.</p>')}
+  </main>`;
+}
+
+function ProgressScreen(){
+  const latest=st.B.length?[...st.B].sort((a,b)=>a.date.localeCompare(b.date)).at(-1):null;
+  const wp=weekProg(st.L), t=targets();
+  const pts=[...st.B].filter(l=>l.weight).sort((a,b)=>a.date.localeCompare(b.date)).slice(-10);
+  const vals=pts.map(l=>+l.weight), mn=Math.min(...vals)-.3, mx=Math.max(...vals)+.3;
+  const chart=pts.length?`<div class="chart">${pts.map(l=>{const h=((+l.weight-mn)/(mx-mn)*100)||10;return`<div class="chart-col"><i style="height:${h}%"></i><small>${(+l.weight).toFixed(1)}</small></div>`}).join('')}</div>`:'<p class="muted">Log weight to see the trend.</p>';
+  const wks=latest?weeksToGoal(+latest.weight,st.profile.goalKg,t.weeklyKg):null;
+  const recent=Object.values(st.L).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
+  const cards=recent.map(l=>{const pp=PLAN[l.dayIdx%7];const e=Object.values(l.doneEx||{}).filter(Boolean).length;const m=Object.values(l.doneMeal||{}).filter(Boolean).length;const h=Object.values(l.doneHab||{}).filter(Boolean).length;return`<div class="hist-card"><div class="hist-top"><b>${pp?.icon} ${fmtD(l.date)}</b><span>${pp?.type}</span></div><small>${e} exercises · ${m} meals · ${h}/${HABITS.length} habits${l.note?` · "${esc(l.note)}"`:''}</small></div>`;}).join('');
+  return `<main class="page">
+    <section class="hero"><span class="badge">Overview</span><h1>PROGRESS</h1><p>Start ${st.profile.weightKg} kg → Goal ${st.profile.goalKg} kg${wks?` · ~${wks} weeks left`:''}</p></section>
+    <div class="stats-grid">
+      ${stat("Current",latest?.weight||st.profile.weightKg,"kg",`${(st.profile.goalKg-(latest?.weight||st.profile.weightKg)).toFixed(1)} kg to goal`)}
+      ${stat("BMI",bmi(latest?.weight||st.profile.weightKg,st.profile.heightCm),"","context only")}
+    </div>
+    <div class="ai-banner" onclick="set({aiOpen:true});setTimeout(()=>sendAI('Give me a detailed breakdown of my week and what to improve'),300)"><span style="font-size:26px">🤖</span><div><div style="font-weight:800;font-size:14px">Deep Coaching</div><div style="font-size:12px;color:var(--text2)">AI reviews everything and advises</div></div></div>
+    ${sect("This Week","📅","",PLAN.map((pp,i)=>`<div class="week-line"><b style="font-size:13px">${pp.short}</b>${bar(wp[i],true)}<span style="text-align:right;font-family:'JetBrains Mono';font-size:12px;color:var(--accent)">${wp[i]}%</span></div>`).join(''))}
+    ${sect("Weight Trend","📈","",chart)}
+    ${sect("History","🕐","",cards||'<p class="muted">No records yet.</p>')}
+  </main>`;
+}
+
+function PlanScreen(){
+  return `<main class="page">
+    <section class="hero"><span class="badge">12-Week Split</span><h1>THE PLAN</h1><p>Same proven split for everyone. Your calories are personalised.</p></section>
+    ${PLAN.map((p,i)=>sect(`${p.name} — ${p.type}`,p.icon,`${p.exercises.length} ex`,`
+      ${p.exercises.map(e=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px"><span>${esc(e[0])}</span><span class="muted" style="font-family:'JetBrains Mono';font-size:12px">${esc(e[1])}</span></div>`).join('')||'<p class="muted">Rest day.</p>'}
+      <div class="info-box" style="margin-top:10px">${p.cardio}</div>
+      <h3 style="font-size:13px;margin:14px 0 8px;color:var(--accent)">Food plan</h3>
+      ${(p.meals||[]).map(m=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px"><span>${esc(m[0])}</span><span class="muted" style="font-family:'JetBrains Mono';font-size:12px">${esc(m[1]||'planned meal')}</span></div>`).join('')}`)).join('')}
+  </main>`;
+}
+
+function SettingsScreen(){
+  const ai=st.ai||{provider:"groq",apiKey:"",model:"",baseURL:""};
+  const prov=PROVIDERS[ai.provider]||PROVIDERS.groq;
+  return `<main class="page">
+    <section class="hero"><span class="badge ai">Setup</span><h1>SETTINGS</h1><p>Connect a free AI key. Stored only on this device.</p></section>
+    ${sect("AI Provider","🤖",st.ai?.apiKey?'CONNECTED':'',`
+      <label>Provider</label>
+      <select id="s_prov" onchange="SET.provChange(this.value)">${Object.entries(PROVIDERS).map(([k,p])=>`<option value="${k}" ${ai.provider===k?'selected':''}>${p.label}</option>`).join('')}</select>
+      <p class="muted" style="font-size:12px;margin:8px 0">${prov.hint}${prov.keyUrl?` <a class="link" href="${prov.keyUrl}" target="_blank">Get key →</a>`:''}</p>
+      <label>API Key</label>
+      <input id="s_key" type="password" placeholder="paste your key" value="${ai.apiKey||''}">
+      ${prov.models.length?`<label>Model</label><select id="s_model">${prov.models.map(m=>`<option ${ai.model===m?'selected':''}>${m}</option>`).join('')}</select>`:`<label>Model</label><input id="s_model" placeholder="model name" value="${ai.model||''}">`}
+      ${ai.provider==='openai_compat'?`<label>Base URL</label><input id="s_base" placeholder="https://..." value="${ai.baseURL||''}">`:''}
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn ai" style="flex:1" onclick="SET.save()">Save</button>
+        <button class="btn ghost" style="flex:1" onclick="SET.test()">Test Key</button>
+      </div>
+      <div id="s_status" style="margin-top:10px;font-size:13px"></div>`)}
+    ${sect("Your Profile","👤","",`
+      <div>${Object.entries({Weight:st.profile.weightKg+' kg',Height:st.profile.heightCm+' cm',Age:st.profile.age,Sex:st.profile.sex,Activity:ACTIVITY[st.profile.activity]?.label,Goal:GOALS[st.profile.goal]?.label,Target:st.profile.goalKg+' kg'}).map(([k,v])=>`<span class="pill">${k}: ${v}</span>`).join('')}</div>
+      <button class="btn ghost full" style="margin-top:14px" onclick="if(confirm('Redo onboarding? Your logs are kept.')){set({profile:null,onbStep:0})}">Edit Profile</button>`)}
+    ${sect("Data","💾","",`
+      <button class="btn ghost full" onclick="SET.export()">Export My Data (JSON)</button>
+      <button class="btn danger full" style="margin-top:8px" onclick="if(confirm('Erase everything on this device?')){localStorage.clear();location.reload()}">Reset Everything</button>`)}
+    ${sect("Install","📱","",`<p class="muted" style="font-size:13px;line-height:1.6">On iPhone: tap the Share button in Safari → "Add to Home Screen". It opens fullscreen like a real app, fully offline (AI needs internet).</p>`)}
+  </main>`;
+}
+
+window.SET = {
+  provChange:(v)=>{const cur=st.ai||{};set({ai:{...cur,provider:v,model:PROVIDERS[v].defaultModel}});},
+  save:()=>{
+    const provider=document.getElementById('s_prov').value;
+    const apiKey=document.getElementById('s_key').value.trim();
+    const model=document.getElementById('s_model').value.trim();
+    const baseEl=document.getElementById('s_base');
+    const settings={provider,apiKey,model,baseURL:baseEl?baseEl.value.trim():""};
+    saveAISettings(settings);set({ai:settings});
+    document.getElementById('s_status').innerHTML='<span style="color:var(--accent)">✓ Saved on this device.</span>';
+  },
+  test:async()=>{
+    const provider=document.getElementById('s_prov').value;
+    const apiKey=document.getElementById('s_key').value.trim();
+    const model=document.getElementById('s_model').value.trim();
+    const baseEl=document.getElementById('s_base');
+    const settings={provider,apiKey,model,baseURL:baseEl?baseEl.value.trim():""};
+    const el=document.getElementById('s_status');
+    el.innerHTML='<span class="muted">Testing…</span>';
+    try{await testKey(settings);saveAISettings(settings);set({ai:settings});el.innerHTML='<span style="color:var(--accent)">✓ Works! Key saved.</span>';}
+    catch(e){el.innerHTML=`<span style="color:var(--danger)">✗ ${esc(e.message)}</span>`;}
+  },
+  export:()=>{
+    const data={profile:st.profile,logs:st.L,body:st.B};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='shred-data.json';a.click();
+  },
+};
+
+// ============================================================
+// AI PANEL
+// ============================================================
+function AIPanel(){
+  const msgs=st.aiMsgs.map((m,i)=>`<div class="msg ${m.role}"><div class="bubble">${esc(m.text)}</div>${m.applied?`<div class="applied">✓ Applied: ${describe(m.applied)}</div>`:''}${m.action?`<div class="action-card"><div class="lbl">⚡ Proposed</div><div class="muted">${describe(m.action)}</div><div class="action-row"><button class="btn ai" onclick="AIP.apply(${i})">✓ Apply</button><button class="btn ghost" onclick="AIP.skip(${i})">Skip</button></div></div>`:''}<div class="msg-time">${fmtT(m.time)}</div></div>`).join('');
+  const sugg=["Log today's workout done","Log my planned meals","Give me the best exercises for aesthetic body","What should I eat?","Am I on track?"];
+  return `<div class="ai-panel${st.aiOpen?' open':''}">
+    <div class="ai-head">
+      <div class="ai-avatar">🤖</div>
+      <div style="flex:1"><h3>Personal Trainer AI</h3><p>${st.ai?.apiKey?(PROVIDERS[st.ai.provider]?.label+' · agent'):'not connected'}</p></div>
+      <div class="ai-toggle" style="background:${st.agent?'var(--aiBg)':'#ffffff0a'};border:1px solid ${st.agent?'var(--aiBorder)':'var(--border)'};color:${st.agent?'var(--ai)':'var(--muted)'}" onclick="set({agent:!st.agent},true)"><span class="d" style="background:${st.agent?'var(--ai)':'var(--muted)'}"></span>Agent</div>
+      <button class="ai-x" onclick="set({aiOpen:false})">✕</button>
+    </div>
+    <div class="ai-sugg">${sugg.map(s=>`<button class="chip" onclick="sendAI('${s}')">${s}</button>`).join('')}</div>
+    <div class="ai-msgs" id="msgs">${msgs}${st.aiLoading?'<div class="msg ai"><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>':''}</div>
+    <div class="ai-input">
+      <textarea id="aiIn" placeholder="${st.ai?.apiKey?'Ask your trainer…':'Add a key in Settings first'}" rows="1" oninput="st.aiInput=this.value;this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI(this.value);this.value='';this.style.height='auto'}">${esc(st.aiInput||'')}</textarea>
+      <button class="send" onclick="const t=document.getElementById('aiIn');sendAI(t.value);t.value='';t.style.height='auto'" ${st.aiLoading?'disabled':''}>➤</button>
+    </div>
+  </div>`;
+}
+window.AIP={
+  apply:(i)=>{const a=st.aiMsgs[i].action;execAction(a);const M=clone(st.aiMsgs);M[i]={...M[i],action:null,applied:a};set({aiMsgs:M},true);},
+  skip:(i)=>{const M=clone(st.aiMsgs);M[i]={...M[i],action:null};set({aiMsgs:M},true);},
+};
+
+// ============================================================
+// ROOT RENDER
+// ============================================================
+function render(){
+  const root=document.getElementById('root');
+  if(!st.profile){root.innerHTML=Onboarding();return;}
+  let screen='';
+  if(st.screen==='today')screen=TodayScreen();
+  else if(st.screen==='body')screen=BodyScreen();
+  else if(st.screen==='progress')screen=ProgressScreen();
+  else if(st.screen==='plan')screen=PlanScreen();
+  else if(st.screen==='settings')screen=SettingsScreen();
+  else screen=TodayScreen();
+
+  const NAV=[['today','🏋️','Today'],['body','⚖️','Body'],['progress','📊','Progress'],['plan','📅','Plan'],['settings','⚙️','Settings']];
+  root.innerHTML=`<div class="app">
+    <header class="header"><div><div class="brand-title">SHRED</div><div class="brand-sub">${st.profile.weightKg}→${st.profile.goalKg} kg</div></div><button class="btn" onclick="set({dayIdx:todayIdx(),screen:'today'})">⚡ Today</button></header>
+    ${screen}
+    <nav>${NAV.map(([s,ic,lb])=>`<button class="${st.screen===s?'active':''}" onclick="set({screen:'${s}'})"><span>${ic}</span>${lb}</button>`).join('')}<button class="ai-tab ${st.aiOpen?'active':''}" onclick="set({aiOpen:!st.aiOpen})"><span>🤖</span>AI</button></nav>
+  </div>
+  ${st.aiOpen?'<div class="overlay" onclick="set({aiOpen:false})"></div>':''}
+  ${AIPanel()}
+  <button class="ai-fab" onclick="set({aiOpen:!st.aiOpen})">🤖</button>`;
+
+  if(st.aiOpen){const el=document.getElementById('msgs');if(el)setTimeout(()=>el.scrollTop=el.scrollHeight,50);}
+}
+
+// expose for inline handlers
+Object.assign(window,{set,toggle,mut,upBody,rmBody,sendAI,execAction,todayIdx});
+// st must be a LIVE getter — Object.assign would invoke and freeze it, so define explicitly
+Object.defineProperty(window,'st',{get(){return st;},configurable:true});
+
+// register service worker for offline/PWA
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+
+render();
+</script>
+</body>
 </html>
