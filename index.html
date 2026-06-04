@@ -145,10 +145,13 @@ nav button.ai-tab.active{color:var(--ai)}
 .result-cal{font-family:'JetBrains Mono';font-size:48px;color:var(--accent);text-align:center;margin:8px 0}
 .pill{display:inline-block;background:#ffffff0a;border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text2);margin:3px}
 .link{color:var(--ai);text-decoration:none;border-bottom:1px solid var(--aiBorder)}
+.pull-refresh{position:fixed;top:calc(env(safe-area-inset-top,0) + 8px);left:50%;z-index:60;transform:translate(-50%,-70px);background:var(--card);border:1px solid var(--accent2);color:var(--accent);border-radius:999px;padding:9px 14px;font-size:12px;font-weight:800;box-shadow:0 8px 30px #0008;transition:transform .2s,opacity .2s;opacity:0}
+.pull-refresh.show{opacity:1}
 @media(max-width:560px){.hero h1{font-size:38px}.macro-grid{gap:8px}.onb h1{font-size:44px}}
 </style>
 </head>
 <body>
+<div id="pullRefresh" class="pull-refresh">Pull to refresh</div>
 <div id="root"></div>
 
 <script type="module">
@@ -156,36 +159,173 @@ import { computeTargets, retargetForWeight, weeksToGoal, bmi, ACTIVITY, GOALS,
          lbToKg, kgToLb, ftInToCm, cmToFtIn } from "./engine.js";
 import { PROVIDERS, loadAISettings, saveAISettings, clearAISettings, aiChat, testKey } from "./ai.js";
 
-// ── PLAN (same for everyone) ─────────────────────────────────
-const PLAN = [
-  {name:"Monday",short:"Mon",type:"Push Day",icon:"💪",warmup:"5–7 min treadmill + shoulder rotations",
-   exercises:[["Bench Press","4 × 6–8"],["Incline DB Press","3 × 8–10"],["Seated Shoulder Press","3 × 8–10"],["Lateral Raises","4 × 15–20"],["Cable Chest Fly","3 × 12–15"],["Triceps Pushdown","3 × 12–15"]],
-   cardio:"Incline treadmill — 20 min · Incline 8–12 · 4.5–5.5 km/h",
-   meals:[["Oats + whey OR eggs + toast","planned meal"],["Protein + rotis + curd + salad","planned meal"],["Banana pre-workout","planned meal"],["Protein-heavy dinner","planned meal"]]},
-  {name:"Tuesday",short:"Tue",type:"Pull Day",icon:"🔙",
-   exercises:[["Lat Pulldown","4 × 8–12"],["Seated Cable Row","3 × 8–12"],["One-Arm DB Row","3 × 10/side"],["Face Pulls","3 × 15–20"],["Dumbbell Curl","3 × 10–12"],["Hammer Curl","3 × 10–12"]],
-   cardio:"Incline treadmill — 20 min · Incline 8–12",
-   meals:[["Oats + whey OR eggs + toast","planned meal"],["Chicken/paneer rice bowl + salad","planned meal"],["Fruit + black coffee pre-workout","planned meal"],["Dal/eggs/chicken + roti + vegetables","planned meal"]]},
-  {name:"Wednesday",short:"Wed",type:"Legs + Core",icon:"🦵",
-   exercises:[["Squat / Leg Press","4 × 8–10"],["Romanian Deadlift","3 × 8–10"],["Leg Curl","3 × 10–15"],["Calf Raises","4 × 15–20"],["Hanging Knee Raises","3 × 10–15"],["Plank","3 × 45–60s"]],
-   cardio:"Optional easy walk 10–15 min.",
-   meals:[["Oats + whey OR eggs + toast","planned meal"],["Protein + rotis + curd + salad","planned meal"],["Banana / dates pre-workout","planned meal"],["High-protein dinner + vegetables","planned meal"]]},
-  {name:"Thursday",short:"Thu",type:"Cardio + Mobility",icon:"🚶",
-   exercises:[["Cat-Cow","10 reps"],["Hip Flexor Stretch","45s/side"],["Glute Bridges","2 × 15"],["Dead Bug","2 × 10/side"],["Wall Slides","2 × 12"]],
-   cardio:"Incline walk — 35–45 min, moderate.",
-   meals:[["Light protein breakfast","planned meal"],["Balanced lunch: protein + carbs + salad","planned meal"],["Fruit / curd snack","planned meal"],["Low-oil dinner + protein","planned meal"]]},
-  {name:"Friday",short:"Fri",type:"Upper Aesthetic",icon:"✨",
-   exercises:[["Incline Bench Press","4 × 6–10"],["Lat Pulldown","4 × 8–12"],["DB Shoulder Press","3 × 8–10"],["Cable Row","3 × 10–12"],["Lateral Raises","5 × 15–20"],["Biceps Curl","3 × 10–12"]],
-   cardio:"Incline treadmill — 20–25 min.",
-   meals:[["Oats + whey OR eggs + toast","planned meal"],["Protein + rice/roti + salad","planned meal"],["Banana pre-workout","planned meal"],["Protein-heavy dinner","planned meal"]]},
-  {name:"Saturday",short:"Sat",type:"Conditioning + Abs",icon:"🔥",
-   exercises:[["Incline Treadmill","30 min"],["Cable Crunch","3 × 12–15"],["Leg Raises","3 × 10–15"],["Russian Twists","3 × 20"],["Push-ups","3 × failure"]],
-   cardio:"Cardio first, then abs.",
-   meals:[["High-protein breakfast","planned meal"],["Lean lunch + salad","planned meal"],["Hydration + fruit snack","planned meal"],["Controlled dinner, no fried snacks","planned meal"]]},
-  {name:"Sunday",short:"Sun",type:"Rest + Progress",icon:"😴",exercises:[],
-   cardio:"8,000–10,000 steps. Light stretching.",
-   meals:[["Normal breakfast, high protein","planned meal"],["Balanced lunch","planned meal"],["Light snack / fruit","planned meal"],["Early light dinner","planned meal"]]},
-];
+// ── PERSONAL PLAN ENGINE (200+ exercise library) ─────────────
+const DIET_OPTIONS = {
+  veg: "Vegetarian",
+  egg: "Eggs allowed, no meat",
+  nonveg: "Non-vegetarian",
+};
+const FOCUS_OPTIONS = {
+  balanced: "Balanced aesthetic",
+  legs_glutes: "Legs / glutes priority",
+  upper: "Upper body priority",
+  fat_loss: "Fat loss + conditioning",
+  no_chest: "No chest priority",
+};
+
+const EXERCISE_LIBRARY = {
+  chest: "Bench Press|Incline Barbell Press|Incline Dumbbell Press|Flat Dumbbell Press|Machine Chest Press|Smith Machine Press|Cable Chest Fly|Low Cable Fly|Pec Deck Fly|Push-up|Weighted Push-up|Decline Push-up|Chest Dip|Incline Push-up|Landmine Press|Single-arm Cable Press|Dumbbell Pullover|Svend Press".split("|"),
+  back: "Lat Pulldown|Close-grip Pulldown|Wide-grip Pulldown|Pull-up|Assisted Pull-up|Chin-up|Seated Cable Row|Chest-supported Row|One-arm Dumbbell Row|Barbell Row|T-bar Row|Machine Row|Inverted Row|Straight-arm Pulldown|Face Pull|Rear Delt Row|Meadows Row|Landmine Row|Cable High Row|Single-arm Cable Row|Scapular Pull-up|Rack Pull".split("|"),
+  shoulders: "Seated Shoulder Press|Standing Overhead Press|Dumbbell Shoulder Press|Arnold Press|Machine Shoulder Press|Lateral Raise|Cable Lateral Raise|Lean-away Lateral Raise|Front Raise|Rear Delt Fly|Reverse Pec Deck|Y Raise|Upright Row|Landmine Shoulder Press|Plate Raise|Bus Driver|Cuban Press|Wall Slide".split("|"),
+  biceps: "Dumbbell Curl|Barbell Curl|EZ-bar Curl|Incline Dumbbell Curl|Hammer Curl|Cable Curl|Preacher Curl|Concentration Curl|Spider Curl|Reverse Curl|Bayesian Cable Curl|Zottman Curl|Cross-body Hammer Curl|Machine Curl".split("|"),
+  triceps: "Triceps Pushdown|Rope Pushdown|Overhead Cable Extension|Dumbbell Overhead Extension|Skull Crusher|Close-grip Bench Press|Bench Dip|Assisted Dip|Cable Kickback|Single-arm Pushdown|PJR Pullover|Machine Dip|Diamond Push-up|Tate Press".split("|"),
+  quads: "Back Squat|Front Squat|Goblet Squat|Leg Press|Hack Squat|Smith Squat|Bulgarian Split Squat|Walking Lunge|Reverse Lunge|Step-up|Leg Extension|Sissy Squat|Wall Sit|Cyclist Squat|Landmine Squat|Split Squat|Spanish Squat|Box Squat|Heel-elevated Squat|Cable Squat".split("|"),
+  hamstrings: "Romanian Deadlift|Barbell RDL|Dumbbell RDL|Single-leg RDL|Lying Leg Curl|Seated Leg Curl|Standing Leg Curl|Nordic Curl|Good Morning|Glute Ham Raise|Cable Pull-through|Kettlebell Swing|Stability Ball Curl|Slider Leg Curl|Hip Hinge Drill|Trap Bar Deadlift".split("|"),
+  glutes: "Hip Thrust|Barbell Hip Thrust|Smith Hip Thrust|Glute Bridge|Single-leg Glute Bridge|Cable Kickback|Machine Kickback|Banded Kickback|Abductor Machine|Cable Abduction|Frog Pump|Sumo Deadlift|Sumo Squat|Curtsy Lunge|Step-down|Reverse Hyper|45-degree Back Extension|Kneeling Squat|B-stance Hip Thrust|Lateral Band Walk".split("|"),
+  calves: "Standing Calf Raise|Seated Calf Raise|Leg Press Calf Raise|Single-leg Calf Raise|Donkey Calf Raise|Smith Calf Raise|Tibialis Raise|Farmer Walk on Toes|Jump Rope|Calf Stretch Hold".split("|"),
+  core: "Plank|Side Plank|Dead Bug|Hollow Hold|Cable Crunch|Machine Crunch|Hanging Knee Raise|Hanging Leg Raise|Reverse Crunch|Russian Twist|Bicycle Crunch|Mountain Climber|Pallof Press|Wood Chop|Ab Wheel Rollout|Bird Dog|Toe Touch|V-up|Flutter Kick|Dragon Flag Progression|Suitcase Carry|Farmer Carry".split("|"),
+  cardio: "Incline Treadmill Walk|Outdoor Brisk Walk|Stationary Bike|Spin Bike Intervals|Rowing Machine|Elliptical|Stair Climber|Battle Rope|Jump Rope|Sled Push|Sled Pull|Air Bike|Shadow Boxing|Kettlebell Swings|Burpees|Step Mill|Jog-Walk Intervals|Low-impact March".split("|"),
+  mobility: "Cat-Cow|Hip Flexor Stretch|Couch Stretch|World's Greatest Stretch|90-90 Hip Switch|Thoracic Rotation|Child Pose Reach|Ankle Rocker|Hamstring Sweep|Pigeon Stretch|Doorway Pec Stretch|Lat Stretch|Wall Slide|Band Pull-apart|Scapular Push-up|Glute Stretch|Quad Stretch|Calf Stretch|Deep Squat Hold|Foam Roll Quads|Foam Roll Lats|Neck CARs|Shoulder CARs|Breathing Drill".split("|"),
+};
+const EXERCISE_COUNT = Object.values(EXERCISE_LIBRARY).reduce((s,a)=>s+a.length,0);
+
+const MEAL_BANK = {
+  veg: {
+    breakfast: [
+      {name:"Paneer bhurji + 2 rotis",proteinG:34,kcal:520},{name:"Greek curd bowl + oats + fruit",proteinG:30,kcal:430},{name:"Besan chilla + curd",proteinG:28,kcal:460},{name:"Tofu scramble + toast",proteinG:32,kcal:450},{name:"Moong dal cheela + paneer filling",proteinG:36,kcal:520}
+    ],
+    lunch: [
+      {name:"Rajma rice + curd + salad",proteinG:32,kcal:650},{name:"Paneer rice bowl + salad",proteinG:38,kcal:680},{name:"Dal + 2 rotis + curd + vegetables",proteinG:30,kcal:560},{name:"Chole + rice + salad",proteinG:31,kcal:650},{name:"Tofu stir-fry + rice",proteinG:36,kcal:600}
+    ],
+    snack: [
+      {name:"Whey in water + banana",proteinG:25,kcal:220},{name:"Roasted chana + lassi",proteinG:22,kcal:300},{name:"Sprouts chaat + curd",proteinG:24,kcal:280},{name:"Protein smoothie",proteinG:30,kcal:350},{name:"Paneer cubes + fruit",proteinG:24,kcal:330}
+    ],
+    dinner: [
+      {name:"Paneer/tofu tikka + salad + roti",proteinG:40,kcal:580},{name:"Dal khichdi + curd",proteinG:28,kcal:520},{name:"Soya chunks curry + rice",proteinG:42,kcal:620},{name:"Mixed dal + vegetables + rotis",proteinG:32,kcal:560},{name:"Tofu bowl + soup",proteinG:36,kcal:500}
+    ]
+  },
+  egg: {
+    breakfast: [
+      {name:"3 egg omelette + toast",proteinG:30,kcal:430},{name:"2 eggs + Greek curd oats",proteinG:34,kcal:480},{name:"Egg bhurji + 2 rotis",proteinG:32,kcal:500},{name:"Boiled eggs + fruit + curd",proteinG:31,kcal:420},{name:"Paneer + egg wrap",proteinG:38,kcal:540}
+    ],
+    lunch: [
+      {name:"Egg curry + rice + salad",proteinG:34,kcal:620},{name:"Paneer rice bowl + curd",proteinG:38,kcal:680},{name:"Dal + eggs + rotis",proteinG:36,kcal:620},{name:"Soya pulao + boiled eggs",proteinG:42,kcal:700},{name:"Tofu bowl + egg whites",proteinG:44,kcal:610}
+    ],
+    snack: [
+      {name:"Whey + banana",proteinG:25,kcal:220},{name:"3 boiled egg whites + lassi",proteinG:24,kcal:250},{name:"Sprouts + 2 boiled eggs",proteinG:28,kcal:330},{name:"Protein coffee",proteinG:25,kcal:180},{name:"Curd + chana chaat",proteinG:22,kcal:300}
+    ],
+    dinner: [
+      {name:"Egg white bhurji + salad + roti",proteinG:38,kcal:480},{name:"Paneer/tofu tikka + dal",proteinG:42,kcal:620},{name:"Egg curry + vegetables",proteinG:35,kcal:500},{name:"Soya chunks + curd",proteinG:45,kcal:580},{name:"Dal khichdi + omelette",proteinG:36,kcal:600}
+    ]
+  },
+  nonveg: {
+    breakfast: [
+      {name:"Egg omelette + toast",proteinG:30,kcal:430},{name:"Greek curd oats + whey",proteinG:42,kcal:520},{name:"Chicken sandwich + fruit",proteinG:36,kcal:480},{name:"Egg bhurji + roti",proteinG:32,kcal:500},{name:"Tuna/egg toast",proteinG:38,kcal:450}
+    ],
+    lunch: [
+      {name:"Chicken rice bowl + salad",proteinG:48,kcal:680},{name:"Fish curry + rice + salad",proteinG:44,kcal:640},{name:"Chicken roti plate + curd",proteinG:46,kcal:700},{name:"Egg curry + dal + rice",proteinG:40,kcal:660},{name:"Lean meat kebab + rice",proteinG:50,kcal:690}
+    ],
+    snack: [
+      {name:"Whey + banana",proteinG:25,kcal:220},{name:"Boiled eggs + black coffee",proteinG:24,kcal:230},{name:"Chicken tikka snack",proteinG:35,kcal:300},{name:"Greek curd + fruit",proteinG:24,kcal:260},{name:"Protein smoothie",proteinG:32,kcal:360}
+    ],
+    dinner: [
+      {name:"Grilled chicken + vegetables + roti",proteinG:52,kcal:650},{name:"Fish + rice + salad",proteinG:46,kcal:600},{name:"Chicken soup + roti",proteinG:40,kcal:500},{name:"Egg/chicken salad bowl",proteinG:45,kcal:520},{name:"Chicken curry, controlled oil + rice",proteinG:48,kcal:680}
+    ]
+  }
+};
+
+function fallbackProfile(profile){return {weightKg:80,heightCm:175,age:28,sex:"male",activity:"moderate",goal:"cut",goalKg:75,diet:"veg",focus:"balanced",...(profile||{})};}
+function goalMode(p){return (p.goal==="bulk"||p.goal==="lean")?"bulk":(p.goal==="maintain"?"maintain":"cut");}
+function seedFor(p){return ((+p.age||25)+Math.round(+p.weightKg||80)+String(p.sex||"").length+String(p.goal||"").length+String(p.focus||"").length)%17;}
+function pick(cat,n,sets,offset=0,profile=null){const p=fallbackProfile(profile), arr=EXERCISE_LIBRARY[cat]||[];const seed=seedFor(p)+offset;return Array.from({length:n},(_,i)=>[arr[(seed+i)%arr.length],sets]);}
+function mealsFor(profile,di){
+  const p=fallbackProfile(profile), mode=goalMode(p), bank=MEAL_BANK[p.diet]||MEAL_BANK.veg;
+  const tag=mode==="bulk"?"surplus muscle meal":mode==="cut"?"controlled fat-loss meal":"maintenance meal";
+  const slots=["breakfast","lunch","snack","dinner"];
+  return slots.map((slot,i)=>{const pool=bank[slot]||MEAL_BANK.veg[slot];const m=pool[(di+i+seedFor(p))%pool.length];return [m.name,`${m.kcal} kcal · ${tag}`,m.proteinG,m.kcal];});
+}
+function cardioFor(profile,type="normal"){
+  const p=fallbackProfile(profile), mode=goalMode(p);
+  if(type==="rest") return "8,000–10,000 steps + light stretching.";
+  if(mode==="bulk") return "Easy incline walk — 10–20 min. Keep recovery strong for muscle gain.";
+  if(mode==="maintain") return "Incline walk / bike — 20–25 min, moderate.";
+  return type==="hard"?"Incline walk or bike — 35–45 min. Keep it controlled, not exhausting.":"Incline treadmill — 25–35 min · Incline 8–12 · steady pace.";
+}
+function setsFor(profile,kind){
+  const mode=goalMode(fallbackProfile(profile));
+  if(kind==="main") return mode==="bulk"?"4 × 5–8":"3–4 × 8–12";
+  if(kind==="pump") return mode==="bulk"?"3 × 10–12":"3 × 12–15";
+  if(kind==="burn") return "3 × 15–20";
+  if(kind==="core") return "3 × 12–20";
+  if(kind==="mob") return "2 × 45–60s";
+  return "3 × 10–15";
+}
+function dayFrom(profile,di,name,short,type,icon,cats,cardioType="normal",warmup="5–7 min easy cardio + joint warmup"){
+  const ex=cats.flatMap((c,idx)=>pick(c.cat,c.n,c.sets,idx*3,profile));
+  return {name,short,type,icon,warmup,exercises:ex,cardio:cardioFor(profile,cardioType),meals:mealsFor(profile,di),foodTip:dietTip(profile)};
+}
+function dietTip(profile){
+  const p=fallbackProfile(profile), d=DIET_OPTIONS[p.diet]||DIET_OPTIONS.veg, mode=goalMode(p);
+  const base=mode==="bulk"?"Eat a small calorie surplus and hit protein first.":mode==="cut"?"Keep oil/sugar controlled and keep protein high.":"Keep calories stable and protein consistent.";
+  return `${d}: ${base}`;
+}
+function buildDayFocus(profile,focus){
+  const p=fallbackProfile(profile), main=setsFor(p,"main"), pump=setsFor(p,"pump"), burn=setsFor(p,"burn"), core=setsFor(p,"core"), mob=setsFor(p,"mob");
+  if(focus==="legs"||focus==="legs_glutes") return [...pick("quads",2,main,1,p),...pick("glutes",2,pump,4,p),...pick("hamstrings",1,pump,7,p),...pick("calves",1,burn,2,p),...pick("core",1,core,5,p)];
+  if(focus==="upper") return [...pick("chest",2,main,1,p),...pick("back",2,main,4,p),...pick("shoulders",2,pump,7,p),...pick("biceps",1,pump,2,p),...pick("triceps",1,pump,3,p)];
+  if(focus==="no_chest") return [...pick("back",2,main,1,p),...pick("shoulders",2,pump,4,p),...pick("quads",1,pump,6,p),...pick("glutes",1,pump,8,p),...pick("core",1,core,3,p)];
+  if(focus==="fat_loss"||focus==="cardio") return [...pick("cardio",2,"20–30 min",1,p),...pick("core",2,core,4,p),...pick("mobility",3,mob,7,p)];
+  return [...pick("chest",1,main,1,p),...pick("back",1,main,2,p),...pick("quads",1,pump,3,p),...pick("glutes",1,pump,4,p),...pick("shoulders",1,pump,5,p),...pick("core",1,core,6,p)];
+}
+function buildPlan(profile){
+  const p=fallbackProfile(profile), main=setsFor(p,"main"), pump=setsFor(p,"pump"), burn=setsFor(p,"burn"), core=setsFor(p,"core"), mob=setsFor(p,"mob");
+  if(p.focus==="legs_glutes") return [
+    dayFrom(p,0,"Monday","Mon","Glutes + Quads","🦵",[{cat:"quads",n:2,sets:main},{cat:"glutes",n:2,sets:pump},{cat:"calves",n:1,sets:burn},{cat:"core",n:1,sets:core}]),
+    dayFrom(p,1,"Tuesday","Tue","Back + Core","🔙",[{cat:"back",n:3,sets:main},{cat:"shoulders",n:1,sets:pump},{cat:"biceps",n:1,sets:pump},{cat:"core",n:1,sets:core}]),
+    dayFrom(p,2,"Wednesday","Wed","Hamstrings + Glutes","🍑",[{cat:"hamstrings",n:3,sets:main},{cat:"glutes",n:2,sets:pump},{cat:"calves",n:1,sets:burn}]),
+    dayFrom(p,3,"Thursday","Thu","Cardio + Mobility","🚶",[{cat:"cardio",n:1,sets:"35–45 min"},{cat:"mobility",n:5,sets:mob}],"hard","Easy warmup + mobility flow"),
+    dayFrom(p,4,"Friday","Fri","Legs Pump + Core","🔥",[{cat:"quads",n:2,sets:pump},{cat:"glutes",n:2,sets:burn},{cat:"hamstrings",n:1,sets:pump},{cat:"core",n:2,sets:core}]),
+    dayFrom(p,5,"Saturday","Sat","Conditioning + Abs","✨",[{cat:"cardio",n:2,sets:"15–25 min"},{cat:"core",n:3,sets:core},{cat:"mobility",n:1,sets:mob}],"hard"),
+    {name:"Sunday",short:"Sun",type:"Rest + Progress",icon:"😴",exercises:[],cardio:cardioFor(p,"rest"),meals:mealsFor(p,6),foodTip:dietTip(p)}
+  ];
+  if(p.focus==="no_chest") return [
+    dayFrom(p,0,"Monday","Mon","Back + Shoulders","🔙",[{cat:"back",n:3,sets:main},{cat:"shoulders",n:3,sets:pump},{cat:"core",n:1,sets:core}]),
+    dayFrom(p,1,"Tuesday","Tue","Legs Strength","🦵",[{cat:"quads",n:2,sets:main},{cat:"hamstrings",n:2,sets:main},{cat:"glutes",n:1,sets:pump},{cat:"calves",n:1,sets:burn}]),
+    dayFrom(p,2,"Wednesday","Wed","Cardio + Mobility","🚶",[{cat:"cardio",n:1,sets:"35–45 min"},{cat:"mobility",n:5,sets:mob}],"hard"),
+    dayFrom(p,3,"Thursday","Thu","Arms + Core","💪",[{cat:"biceps",n:2,sets:pump},{cat:"triceps",n:2,sets:pump},{cat:"shoulders",n:1,sets:pump},{cat:"core",n:2,sets:core}]),
+    dayFrom(p,4,"Friday","Fri","Glutes + Back","🍑",[{cat:"glutes",n:2,sets:pump},{cat:"back",n:2,sets:main},{cat:"hamstrings",n:1,sets:main},{cat:"core",n:1,sets:core}]),
+    dayFrom(p,5,"Saturday","Sat","Fat-loss Conditioning","🔥",[{cat:"cardio",n:2,sets:"20–30 min"},{cat:"core",n:2,sets:core},{cat:"mobility",n:1,sets:mob}],"hard"),
+    {name:"Sunday",short:"Sun",type:"Rest + Progress",icon:"😴",exercises:[],cardio:cardioFor(p,"rest"),meals:mealsFor(p,6),foodTip:dietTip(p)}
+  ];
+  if(p.focus==="fat_loss") return [
+    dayFrom(p,0,"Monday","Mon","Full Body Burn","🔥",[{cat:"quads",n:1,sets:pump},{cat:"back",n:1,sets:pump},{cat:"chest",n:1,sets:pump},{cat:"glutes",n:1,sets:pump},{cat:"core",n:2,sets:core}],"hard"),
+    dayFrom(p,1,"Tuesday","Tue","Cardio + Core","🚴",[{cat:"cardio",n:2,sets:"20–30 min"},{cat:"core",n:3,sets:core},{cat:"mobility",n:1,sets:mob}],"hard"),
+    dayFrom(p,2,"Wednesday","Wed","Lower Body Tone","🦵",[{cat:"quads",n:2,sets:pump},{cat:"glutes",n:2,sets:pump},{cat:"hamstrings",n:1,sets:pump},{cat:"calves",n:1,sets:burn}]),
+    dayFrom(p,3,"Thursday","Thu","Mobility + Walk","🚶",[{cat:"cardio",n:1,sets:"40–50 min"},{cat:"mobility",n:5,sets:mob}],"hard"),
+    dayFrom(p,4,"Friday","Fri","Upper Tone","✨",[{cat:"back",n:2,sets:pump},{cat:"shoulders",n:2,sets:pump},{cat:"chest",n:1,sets:pump},{cat:"biceps",n:1,sets:pump},{cat:"triceps",n:1,sets:pump}]),
+    dayFrom(p,5,"Saturday","Sat","Conditioning","⚡",[{cat:"cardio",n:3,sets:"12–20 min"},{cat:"core",n:2,sets:core}],"hard"),
+    {name:"Sunday",short:"Sun",type:"Rest + Progress",icon:"😴",exercises:[],cardio:cardioFor(p,"rest"),meals:mealsFor(p,6),foodTip:dietTip(p)}
+  ];
+  if(p.focus==="upper") return [
+    dayFrom(p,0,"Monday","Mon","Push Strength","💪",[{cat:"chest",n:3,sets:main},{cat:"shoulders",n:2,sets:pump},{cat:"triceps",n:1,sets:pump}]),
+    dayFrom(p,1,"Tuesday","Tue","Pull Strength","🔙",[{cat:"back",n:4,sets:main},{cat:"biceps",n:2,sets:pump}]),
+    dayFrom(p,2,"Wednesday","Wed","Legs Maintenance","🦵",[{cat:"quads",n:2,sets:pump},{cat:"hamstrings",n:2,sets:pump},{cat:"glutes",n:1,sets:pump},{cat:"calves",n:1,sets:burn}]),
+    dayFrom(p,3,"Thursday","Thu","Cardio + Mobility","🚶",[{cat:"cardio",n:1,sets:"25–35 min"},{cat:"mobility",n:5,sets:mob}],"normal"),
+    dayFrom(p,4,"Friday","Fri","Upper Aesthetic","✨",[{cat:"chest",n:2,sets:pump},{cat:"back",n:2,sets:pump},{cat:"shoulders",n:2,sets:burn},{cat:"biceps",n:1,sets:pump},{cat:"triceps",n:1,sets:pump}]),
+    dayFrom(p,5,"Saturday","Sat","Arms + Abs","🔥",[{cat:"biceps",n:2,sets:pump},{cat:"triceps",n:2,sets:pump},{cat:"core",n:3,sets:core}]),
+    {name:"Sunday",short:"Sun",type:"Rest + Progress",icon:"😴",exercises:[],cardio:cardioFor(p,"rest"),meals:mealsFor(p,6),foodTip:dietTip(p)}
+  ];
+  return [
+    dayFrom(p,0,"Monday","Mon","Push Day","💪",[{cat:"chest",n:3,sets:main},{cat:"shoulders",n:2,sets:pump},{cat:"triceps",n:1,sets:pump}]),
+    dayFrom(p,1,"Tuesday","Tue","Pull Day","🔙",[{cat:"back",n:4,sets:main},{cat:"biceps",n:2,sets:pump}]),
+    dayFrom(p,2,"Wednesday","Wed","Legs + Core","🦵",[{cat:"quads",n:2,sets:main},{cat:"hamstrings",n:2,sets:main},{cat:"glutes",n:1,sets:pump},{cat:"calves",n:1,sets:burn},{cat:"core",n:1,sets:core}]),
+    dayFrom(p,3,"Thursday","Thu","Cardio + Mobility","🚶",[{cat:"cardio",n:1,sets:"30–45 min"},{cat:"mobility",n:5,sets:mob}],"hard","Easy warmup + mobility flow"),
+    dayFrom(p,4,"Friday","Fri","Upper Aesthetic","✨",[{cat:"chest",n:2,sets:pump},{cat:"back",n:2,sets:pump},{cat:"shoulders",n:2,sets:burn},{cat:"biceps",n:1,sets:pump}]),
+    dayFrom(p,5,"Saturday","Sat","Conditioning + Abs","🔥",[{cat:"cardio",n:1,sets:"25–35 min"},{cat:"core",n:4,sets:core},{cat:"mobility",n:1,sets:mob}],"hard"),
+    {name:"Sunday",short:"Sun",type:"Rest + Progress",icon:"😴",exercises:[],cardio:cardioFor(p,"rest"),meals:mealsFor(p,6),foodTip:dietTip(p)}
+  ];
+}
+let PLAN = buildPlan(null);
 const HABITS = [["steps","👟","10,000 steps"],["water","💧","Hit water goal"],["protein","🥩","Hit protein goal"],["sleep","😴","7+ hours sleep"],["calories","🔥","Stay in calorie target"],["nosugar","🚫","No sugar / fried snacks"]];
 
 // ── utils ────────────────────────────────────────────────────
@@ -199,10 +339,15 @@ const save_=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const clone=o=>JSON.parse(JSON.stringify(o));
 const wkStart=()=>{const t=new Date();t.setHours(12,0,0,0);const n=t.getDay();t.setDate(t.getDate()-n+(n===0?-6:1));return t;};
 const dayDate=i=>{const t=wkStart();t.setDate(t.getDate()+i);return dstr(t);};
-const blank=(date,di)=>({date,dayIdx:di,doneEx:{},doneMeal:{},doneHab:{},delEx:[],delMeal:[],custEx:[],custMeal:[],note:""});
+const blank=(date,di)=>({date,dayIdx:di,doneEx:{},doneMeal:{},doneHab:{},delEx:[],delMeal:[],custEx:[],custMeal:[],overrideEx:null,targetOverride:{},note:""});
 const getLog=(L,date,di)=>L[date]||blank(date,di);
-const exsOf=(di,log)=>[...PLAN[di].exercises.map((e,i)=>({id:`p_ex_${i}`,name:e[0],sets:e[1],planned:true})),...(log.custEx||[])].filter(e=>!(log.delEx||[]).includes(e.id));
-const mealsOf=(di,log)=>[...(PLAN[di].meals||[]).map((m,i)=>({id:`p_meal_${i}`,name:m[0],sets:m[1]||"planned meal",planned:true})),...(log.custMeal||[])].filter(m=>!(log.delMeal||[]).includes(m.id));
+const mealObj=(m,i,planned=true)=>Array.isArray(m)?{id:`p_meal_${i}`,name:m[0],sets:m[1]||"planned meal",proteinG:+m[2]||estimateProtein(m[0]),kcal:+m[3]||0,planned}:{...m,id:m.id||`p_meal_${i}`,planned};
+const exObj=(e,i,planned=true)=>Array.isArray(e)?{id:`p_ex_${i}`,name:e[0],sets:e[1]||"—",planned}:{...e,id:e.id||`p_ex_${i}`,planned};
+const exsOf=(di,log)=>[...((log.overrideEx||PLAN[di].exercises)||[]).map((e,i)=>exObj(e,i,true)),...(log.custEx||[])].filter(e=>!(log.delEx||[]).includes(e.id));
+const mealsOf=(di,log)=>[...((PLAN[di].meals)||[]).map((m,i)=>mealObj(m,i,true)),...(log.custMeal||[])].filter(m=>!(log.delMeal||[]).includes(m.id));
+const estimateProtein=s=>{s=String(s||"").toLowerCase();let g=0;if(/whey|protein/.test(s))g+=25;if(/chicken|fish|tuna|meat/.test(s))g+=35;if(/paneer|tofu|soya/.test(s))g+=28;if(/egg/.test(s))g+=18;if(/dal|rajma|chole|chana|sprout|moong/.test(s))g+=16;if(/curd|greek|lassi|milk/.test(s))g+=10;return g||0;};
+const proteinDone=(di,log)=>mealsOf(di,log).filter(m=>log.doneMeal?.[m.id]).reduce((s,m)=>s+(+m.proteinG||0),0);
+const dayTargets=(date,di)=>{const t=targets();const o=getLog(st.L,date,di).targetOverride||{};return t?{...t,...o}:null;};
 const prog=(di,log)=>{const ex=exsOf(di,log), meals=mealsOf(di,log), tot=ex.length+meals.length+HABITS.length;if(!tot)return 0;const d=ex.filter(e=>log.doneEx?.[e.id]).length+meals.filter(m=>log.doneMeal?.[m.id]).length+HABITS.filter(([k])=>log.doneHab?.[k]).length;return Math.round(d/tot*100);};
 const weekProg=L=>PLAN.map((_,i)=>prog(i,getLog(L,dayDate(i),i)));
 const avg7=B=>{const w=[...B].filter(l=>l.weight).sort((a,b)=>a.date.localeCompare(b.date)).slice(-7);return w.length?(w.reduce((s,l)=>s+ +l.weight,0)/w.length).toFixed(1):null;};
@@ -219,9 +364,11 @@ let st = {
   aiOpen: false,
   aiMsgs: [{role:"ai",text:"I'm your Personal Trainer AI 🤖\n\nI can log workouts, tweak your plan, log your weight, and read your progress — all through chat. I just need a free API key (Settings → AI) to start.\n\nWhat do you need?",time:new Date()}],
   aiInput:"", aiLoading:false, agent:true,
-  onbStep: 0, onbDraft: { units:"metric", sex:"male", activity:"moderate", goal:"cut" },
+  onbStep: 0, onbDraft: { units:"metric", sex:"male", activity:"moderate", goal:"cut", diet:"veg", focus:"balanced" },
 };
-function set(p, noSave){ st={...st,...p}; if(!noSave){ save_("sp_logs",st.L); save_("sp_body",st.B); save_("sp_profile",st.profile);} render(); }
+function syncPlan(){ PLAN = buildPlan(st.profile); }
+syncPlan();
+function set(p, noSave){ st={...st,...p}; syncPlan(); if(!noSave){ save_("sp_logs",st.L); save_("sp_body",st.B); save_("sp_profile",st.profile);} render(); }
 
 // targets recomputed from latest weight if available
 function targets(){
@@ -245,8 +392,9 @@ const SYSTEM = () => {
 
 USER PROFILE: ${st.profile?JSON.stringify(st.profile):"not set"}
 CALCULATED TARGETS (offline math, authoritative): ${t?`${t.calories} kcal/day, ${t.proteinG}g protein, ${t.carbG}g carbs, ${t.fatG}g fat, ${t.waterMl}ml water. Goal: ${t.goalLabel}. Est ${t.weeklyKg}kg/week.`:"not set"}
+DIET/FITNESS PREFERENCES: ${st.profile?`${DIET_OPTIONS[st.profile.diet||"veg"]||"Vegetarian"}; focus ${FOCUS_OPTIONS[st.profile.focus||"balanced"]||"Balanced"}; exercise library ${EXERCISE_COUNT}+ exercises.`:"not set"}
 
-Each user message includes a JSON APP STATE with today's exercises, meals, habits (each has a real id/key), weekly progress, and recent body logs. Use real ids. You should recommend exercises based on the user's goal/body target, weak points, schedule, and progress; do not blindly keep the default plan when the user asks for better training.
+Each user message includes a JSON APP STATE with today's exercises, meals, protein logged vs protein target, habits, weekly progress, and recent body logs. Use real ids. Recommend exercises and food based on goal, sex, age, body target, diet preference, focus, weak points, schedule, and progress; do not blindly keep the default plan.
 
 You are an AGENT — you operate the app via actions. Append ONE action at the very END of your reply, raw, last line, format:
 ACTION:{"type":"<type>","payload":<payload>}
@@ -256,18 +404,22 @@ Types:
 - log_meal {date,mealIds:[]}          | untick_meal {date,mealIds:[]}
 - log_habit {date,habitKeys:[]}       | untick_habit {date,habitKeys:[]}
 - add_exercise {date,name,sets}        | remove_exercise {date,exerciseId}
-- add_meal {date,name,sets}            | remove_meal {date,mealId}
+- replace_exercises {date,focus:"legs|upper|no_chest|fat_loss|balanced"}
+- add_meal {date,name,sets,proteinG?,kcal?} | remove_meal {date,mealId}
+- log_food {date,name,proteinG?,kcal?,note?}  // adds to food log and marks eaten
+- set_day_target {date,proteinG?,calories?,carbG?,fatG?}
 - log_body {date,weight,waist?,note?}
 - add_note {date,note}                 | clear_day {date}
 - goto_day {dayIdx:0-6}                | goto_screen {screen:"today|body|progress|plan|settings"}
 
-Rules: ONE action max, only when it does what the user asked; text first, ACTION last. Use today's date from APP STATE unless told otherwise. Keep replies under 110 words. Never invent weight numbers. Reference the user's real calorie/macro targets when relevant.`;
+Rules: ONE action max, only when it does what the user asked; text first, ACTION last. Use today's date from APP STATE unless told otherwise. Keep replies under 110 words. Never invent weight numbers. For food logs, include realistic proteinG when the user names food; ask only if impossible. Reference protein logged vs target when relevant.`;
 };
 
 function aiContext(){
-  const date=dayDate(st.dayIdx), log=getLog(st.L,date,st.dayIdx), p=PLAN[st.dayIdx], t=targets();
+  const date=dayDate(st.dayIdx), log=getLog(st.L,date,st.dayIdx), p=PLAN[st.dayIdx], t=dayTargets(date,st.dayIdx);
   const latest=st.B.length?[...st.B].sort((a,b)=>a.date.localeCompare(b.date)).at(-1):null;
-  return {today:{day:p.name,type:p.type,date,exercises:exsOf(st.dayIdx,log).map(e=>({id:e.id,name:e.name,sets:e.sets,done:!!log.doneEx?.[e.id]})),meals:mealsOf(st.dayIdx,log).map(m=>({id:m.id,name:m.name,done:!!log.doneMeal?.[m.id]})),habits:HABITS.map(([k,,l])=>({key:k,label:l,done:!!log.doneHab?.[k]})),note:log.note||""},
+  const eatenProtein=proteinDone(st.dayIdx,log);
+  return {profile:{...st.profile,dietLabel:DIET_OPTIONS[st.profile?.diet||"veg"],focusLabel:FOCUS_OPTIONS[st.profile?.focus||"balanced"]},today:{day:p.name,type:p.type,date,exercises:exsOf(st.dayIdx,log).map(e=>({id:e.id,name:e.name,sets:e.sets,done:!!log.doneEx?.[e.id]})),meals:mealsOf(st.dayIdx,log).map(m=>({id:m.id,name:m.name,proteinG:+m.proteinG||0,done:!!log.doneMeal?.[m.id]})),proteinLogged:eatenProtein,proteinRemaining:t?Math.max(0,t.proteinG-eatenProtein):null,habits:HABITS.map(([k,,l])=>({key:k,label:l,done:!!log.doneHab?.[k]})),note:log.note||""},
     targets:t?{calories:t.calories,protein:t.proteinG,carbs:t.carbG,fat:t.fatG}:null,
     latestWeight:latest?.weight||null, goalWeight:st.profile?.goalKg||null,
     weeklyProgress:PLAN.map((pp,i)=>({day:pp.short,pct:prog(i,getLog(st.L,dayDate(i),i))}))};
@@ -282,7 +434,10 @@ const describe=a=>{const p=a.payload||{};switch(a.type){
   case"untick_habit":return`Un-check: ${p.habitKeys?.join(", ")}`;
   case"add_exercise":return`Add "${p.name} — ${p.sets}"`;
   case"remove_exercise":return`Remove an exercise`;
-  case"add_meal":return`Add meal "${p.name}"`;
+  case"replace_exercises":return`Replace today with ${p.focus||"custom"} focus`;
+  case"add_meal":return`Add meal "${p.name}"${p.proteinG?` · ${p.proteinG}g protein`:""}`;
+  case"log_food":return`Log food "${p.name}"${p.proteinG?` · ${p.proteinG}g protein`:""}`;
+  case"set_day_target":return`Update today's targets`;
   case"remove_meal":return`Remove a meal`;
   case"log_body":return`Log ${p.weight}kg${p.waist?`, ${p.waist}"`:""}`;
   case"add_note":return`Set today's note`;
@@ -304,7 +459,10 @@ function execAction(a){
     case"untick_habit":mut(date,di,l=>({...l,doneHab:setK(l.doneHab,p.habitKeys,false)}));break;
     case"add_exercise":mut(date,di,l=>({...l,custEx:[...(l.custEx||[]),{id:"ai_"+Date.now(),name:p.name,sets:p.sets||"—",planned:false}]}));break;
     case"remove_exercise":mut(date,di,l=>({...l,custEx:(l.custEx||[]).filter(x=>x.id!==p.exerciseId),delEx:[...(l.delEx||[]),p.exerciseId]}));break;
-    case"add_meal":mut(date,di,l=>({...l,custMeal:[...(l.custMeal||[]),{id:"meal_"+Date.now(),name:p.name,sets:p.sets||"custom meal",planned:false}]}));break;
+    case"replace_exercises":mut(date,di,l=>({...l,overrideEx:buildDayFocus(st.profile,p.focus||"balanced"),delEx:[],doneEx:{}}));break;
+    case"add_meal":mut(date,di,l=>({...l,custMeal:[...(l.custMeal||[]),{id:"meal_"+Date.now(),name:p.name,sets:p.sets||"custom meal",proteinG:+p.proteinG||estimateProtein(p.name),kcal:+p.kcal||0,planned:false}]}));break;
+    case"log_food":{const id="food_"+Date.now();mut(date,di,l=>({...l,custMeal:[...(l.custMeal||[]),{id,name:p.name,sets:p.note||"logged food",proteinG:+p.proteinG||estimateProtein(p.name),kcal:+p.kcal||0,planned:false}],doneMeal:{...l.doneMeal,[id]:true}}));break;}
+    case"set_day_target":mut(date,di,l=>({...l,targetOverride:{...(l.targetOverride||{}),...(p.proteinG?{proteinG:+p.proteinG}:{}) ,...(p.calories?{calories:+p.calories}:{}) ,...(p.carbG?{carbG:+p.carbG}:{}) ,...(p.fatG?{fatG:+p.fatG}:{})}}));break;
     case"remove_meal":mut(date,di,l=>({...l,custMeal:(l.custMeal||[]).filter(x=>x.id!==p.mealId),delMeal:[...(l.delMeal||[]),p.mealId]}));break;
     case"log_body":upBody({date,weight:+p.weight,waist:p.waist||"",note:p.note||""});break;
     case"add_note":mut(date,di,l=>({...l,note:p.note}));break;
@@ -399,10 +557,18 @@ function Onboarding(){
 
   if(step===3) return `<div class="onb">
     <span class="badge">Step 3 of 3</span>
-    <h1 style="font-size:36px">ACTIVITY</h1>
+    <h1 style="font-size:36px">PREFERENCES</h1>
     <label>How active are you?</label>
     <div class="seg" style="flex-direction:column">
       ${Object.entries(ACTIVITY).map(([k,a])=>`<button class="${d.activity===k?'sel':''}" style="text-align:left" onclick="ONB.set({activity:'${k}'})">${a.label}</button>`).join('')}
+    </div>
+    <label>Diet preference</label>
+    <div class="seg" style="flex-direction:column">
+      ${Object.entries(DIET_OPTIONS).map(([k,l])=>`<button class="${(d.diet||'veg')===k?'sel':''}" style="text-align:left" onclick="ONB.set({diet:'${k}'})">${l}</button>`).join('')}
+    </div>
+    <label>Training focus</label>
+    <div class="seg" style="flex-direction:column">
+      ${Object.entries(FOCUS_OPTIONS).map(([k,l])=>`<button class="${(d.focus||'balanced')===k?'sel':''}" style="text-align:left" onclick="ONB.set({focus:'${k}'})">${l}</button>`).join('')}
     </div>
     <button class="btn full" style="margin-top:20px" onclick="ONB.finish()">Build My Plan ⚡</button>
     <div class="dots"><i></i><i></i><i></i><i class="on"></i></div>
@@ -432,7 +598,7 @@ window.ONB = {
   },
   finish:()=>{
     const d=st.onbDraft;
-    const profile={weightKg:d.weightKg,heightCm:d.heightCm,age:d.age,sex:d.sex,activity:d.activity,goal:d.goal,goalKg:d.goalKg,units:d.units,createdAt:new Date().toISOString()};
+    const profile={weightKg:d.weightKg,heightCm:d.heightCm,age:d.age,sex:d.sex,activity:d.activity,goal:d.goal,goalKg:d.goalKg,units:d.units,diet:d.diet||"veg",focus:d.focus||"balanced",createdAt:new Date().toISOString()};
     // seed first body log with starting weight
     const B=[...st.B.filter(l=>l.date!==dstr()),{date:dstr(),weight:d.weightKg,waist:"",note:"Starting weight"}];
     set({profile,B,screen:"today"});
@@ -444,33 +610,35 @@ window.ONB = {
 // ============================================================
 function TodayScreen(){
   const di=st.dayIdx, p=PLAN[di], date=dayDate(di), log=getLog(st.L,date,di);
-  const ex=exsOf(di,log), meals=mealsOf(di,log), t=targets();
+  const ex=exsOf(di,log), meals=mealsOf(di,log), t=dayTargets(date,di);
+  const pDone=proteinDone(di,log), pLeft=t?Math.max(0,t.proteinG-pDone):0;
   const dEx=ex.filter(e=>log.doneEx?.[e.id]).length, dMeal=meals.filter(m=>log.doneMeal?.[m.id]).length, dH=HABITS.filter(([k])=>log.doneHab?.[k]).length;
   const pct=prog(di,log);
 
   const tabs=PLAN.map((pp,i)=>`<button class="tab${i===di?' active':''}" onclick="set({dayIdx:${i}})">${pp.short}${i===todayIdx()?'<span class="dot"></span>':''}</button>`).join('');
   const exRows=ex.map(e=>`<div class="row"><div class="check-row" onclick="toggle('${date}',${di},'doneEx','${e.id}')"><div class="check${log.doneEx?.[e.id]?' done':''}">✓</div><div><b class="${log.doneEx?.[e.id]?'strike':''}">${esc(e.name)}</b><small>${esc(e.sets)}</small></div></div>${!e.planned?`<div class="icon-danger" onclick="mut('${date}',${di},l=>({...l,custEx:(l.custEx||[]).filter(x=>x.id!=='${e.id}'),delEx:[...(l.delEx||[]),'${e.id}']}))">🗑</div>`:''}</div>`).join('');
-  const mealRows=meals.map(m=>`<div class="row"><div class="check-row" onclick="toggle('${date}',${di},'doneMeal','${m.id}')"><div class="check${log.doneMeal?.[m.id]?' done':''}">✓</div><div><b class="${log.doneMeal?.[m.id]?'strike':''}">${esc(m.name)}</b><small>${esc(m.sets||'planned meal')}</small></div></div>${!m.planned?`<div class="icon-danger" onclick="mut('${date}',${di},l=>({...l,custMeal:(l.custMeal||[]).filter(x=>x.id!=='${m.id}'),delMeal:[...(l.delMeal||[]),'${m.id}']}))">🗑</div>`:''}</div>`).join('');
+  const mealRows=meals.map(m=>`<div class="row"><div class="check-row" onclick="toggle('${date}',${di},'doneMeal','${m.id}')"><div class="check${log.doneMeal?.[m.id]?' done':''}">✓</div><div><b class="${log.doneMeal?.[m.id]?'strike':''}">${esc(m.name)}</b><small>${esc(m.sets||'planned meal')}${m.proteinG?` · ${m.proteinG}g protein`:''}</small></div></div>${!m.planned?`<div class="icon-danger" onclick="mut('${date}',${di},l=>({...l,custMeal:(l.custMeal||[]).filter(x=>x.id!=='${m.id}'),delMeal:[...(l.delMeal||[]),'${m.id}']}))">🗑</div>`:''}</div>`).join('');
   const habRows=HABITS.map(([k,ic,lb])=>`<div class="check-row" onclick="toggle('${date}',${di},'doneHab','${k}')"><div class="check${log.doneHab?.[k]?' done':''}">✓</div><b class="${log.doneHab?.[k]?'strike':''}">${ic} ${lb}</b></div>`).join('');
 
   return `<main class="page">
     <div class="tabs">${tabs}</div>
-    <div class="ai-banner" onclick="set({aiOpen:true})"><span style="font-size:26px">🤖</span><div><div style="font-weight:800;font-size:14px">Personal Trainer AI</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Log workouts, tweak the plan, track weight — by chat</div><span class="badge ai" style="margin-top:6px;margin-bottom:0;font-size:10px">${st.ai?.apiKey?'CONNECTED':'TAP TO CONNECT'}</span></div></div>
+    <div class="ai-banner" onclick="set({aiOpen:true})"><span style="font-size:26px">🤖</span><div><div style="font-weight:800;font-size:14px">Personal Trainer AI</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Log workouts, food protein, tweak the plan — by chat</div><span class="badge ai" style="margin-top:6px;margin-bottom:0;font-size:10px">${st.ai?.apiKey?'CONNECTED':'TAP TO CONNECT'}</span></div></div>
     <section class="hero">
       <span class="badge">${p.icon} ${p.type}</span>
       <h1>${p.name.toUpperCase()}</h1>
-      <p>${fmtD(date)} · ${dEx}/${ex.length} exercises · ${dMeal}/${meals.length} meals · ${dH}/${HABITS.length} habits</p>
+      <p>${fmtD(date)} · ${dEx}/${ex.length} exercises · ${dMeal}/${meals.length} meals · ${pDone}/${t?.proteinG||0}g protein</p>
       ${bar(pct)}
     </section>
     ${t?sect("Today's Targets","🎯","",`
       <div style="text-align:center;margin-bottom:12px"><div style="font-family:'JetBrains Mono';font-size:40px;color:var(--accent)">${t.calories}</div><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:1px">calories · ${t.goalLabel}</div></div>
-      <div class="macro-grid"><div class="macro p"><b>${t.proteinG}g</b><span>Protein</span></div><div class="macro c"><b>${t.carbG}g</b><span>Carbs</span></div><div class="macro f"><b>${t.fatG}g</b><span>Fat</span></div></div>
-      <div class="info-box" style="margin-top:12px">💧 Water goal: ${(t.waterMl/1000).toFixed(1)} L · Est. ${t.weeklyKg>0?'+':''}${t.weeklyKg} kg/week</div>`):''}
+      <div class="macro-grid"><div class="macro p"><b>${pDone}/${t.proteinG}g</b><span>Protein logged</span></div><div class="macro c"><b>${t.carbG}g</b><span>Carbs</span></div><div class="macro f"><b>${t.fatG}g</b><span>Fat</span></div></div>
+      <div class="info-box" style="margin-top:12px">💧 Water goal: ${(t.waterMl/1000).toFixed(1)} L · Protein left: ${pLeft}g · Est. ${t.weeklyKg>0?'+':''}${t.weeklyKg} kg/week</div>`):''}
     ${p.warmup?sect("Warmup","🔥","",`<div class="warmup">${p.warmup}</div>`):''}
+    ${sect("Change Today's Focus","🧠","instant",`<div class="seg" style="flex-wrap:wrap"><button onclick="mut('${date}',${di},l=>({...l,overrideEx:buildDayFocus(st.profile,'legs'),doneEx:{},delEx:[]}))">Legs only</button><button onclick="mut('${date}',${di},l=>({...l,overrideEx:buildDayFocus(st.profile,'upper'),doneEx:{},delEx:[]}))">Upper</button><button onclick="mut('${date}',${di},l=>({...l,overrideEx:buildDayFocus(st.profile,'no_chest'),doneEx:{},delEx:[]}))">No chest</button><button onclick="mut('${date}',${di},l=>({...l,overrideEx:buildDayFocus(st.profile,'fat_loss'),doneEx:{},delEx:[]}))">Cardio/Core</button><button onclick="mut('${date}',${di},l=>({...l,overrideEx:null,doneEx:{},delEx:[]}))">Reset plan</button></div><p class="muted" style="font-size:12px;margin-top:8px">Uses the ${EXERCISE_COUNT}+ exercise library and keeps today's log separate.</p>`)}
     ${sect("Workout Log","🏋️",`${dEx}/${ex.length}`,`${exRows||'<p class="muted">Rest day — no lifting.</p>'}
       <div class="add-box"><input id="nx" placeholder="Exercise" style="flex:2"><input id="nxs" placeholder="3 × 12" style="flex:1;min-width:80px"><button class="btn" onclick="(()=>{const n=document.getElementById('nx').value.trim();if(n)mut('${date}',${di},l=>({...l,custEx:[...(l.custEx||[]),{id:'c_'+Date.now(),name:n,sets:document.getElementById('nxs').value.trim()||'—',planned:false}]}))})()">+</button></div>`)}
     ${sect("Food Log","🍴",`${dMeal}/${meals.length}`,`${mealRows||'<p class="muted">No meals planned.</p>'}
-      <div class="add-box"><input id="nm" placeholder="Add what you ate, e.g. chicken rice bowl" style="flex:2"><input id="nms" placeholder="meal note" style="flex:1;min-width:80px"><button class="btn" onclick="(()=>{const n=document.getElementById('nm').value.trim();if(n)mut('${date}',${di},l=>({...l,custMeal:[...(l.custMeal||[]),{id:'m_'+Date.now(),name:n,sets:document.getElementById('nms').value.trim()||'custom meal',planned:false}]}))})()">+</button></div>`)}
+      <div class="add-box"><input id="nm" placeholder="Add what you ate, e.g. chicken rice bowl" style="flex:2"><input id="nmp" type="number" inputmode="numeric" placeholder="protein g" style="flex:1;min-width:90px"><input id="nms" placeholder="meal note" style="flex:1;min-width:90px"><button class="btn" onclick="(()=>{const n=document.getElementById('nm').value.trim();if(n){const id='m_'+Date.now();const pg=+document.getElementById('nmp').value||estimateProtein(n);mut('${date}',${di},l=>({...l,custMeal:[...(l.custMeal||[]),{id,name:n,sets:document.getElementById('nms').value.trim()||'logged food',proteinG:pg,planned:false}],doneMeal:{...l.doneMeal,[id]:true}}))}})()">Log</button></div><div class="info-box" style="margin-top:10px">Protein updates live: ${pDone}g logged / ${t?.proteinG||0}g target. Add protein grams manually or let the app estimate from the food name.</div>`)}
     ${p.cardio?sect("Cardio","🚶","",`<div class="info-box">${p.cardio}</div>`):''}
     ${sect("Daily Habits","📋",`${dH}/${HABITS.length}`,habRows)}
     ${sect("Note","📝","",`<textarea placeholder="How did today go?" onchange="mut('${date}',${di},l=>({...l,note:this.value}))">${esc(log.note||'')}</textarea>`)}
@@ -522,12 +690,13 @@ function ProgressScreen(){
 
 function PlanScreen(){
   return `<main class="page">
-    <section class="hero"><span class="badge">12-Week Split</span><h1>THE PLAN</h1><p>Same proven split for everyone. Your calories are personalised.</p></section>
+    <section class="hero"><span class="badge">Personalised Split</span><h1>THE PLAN</h1><p>${FOCUS_OPTIONS[st.profile.focus||'balanced']} · ${DIET_OPTIONS[st.profile.diet||'veg']} · ${EXERCISE_COUNT}+ exercise library</p></section>
     ${PLAN.map((p,i)=>sect(`${p.name} — ${p.type}`,p.icon,`${p.exercises.length} ex`,`
       ${p.exercises.map(e=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px"><span>${esc(e[0])}</span><span class="muted" style="font-family:'JetBrains Mono';font-size:12px">${esc(e[1])}</span></div>`).join('')||'<p class="muted">Rest day.</p>'}
       <div class="info-box" style="margin-top:10px">${p.cardio}</div>
       <h3 style="font-size:13px;margin:14px 0 8px;color:var(--accent)">Food plan</h3>
-      ${(p.meals||[]).map(m=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px"><span>${esc(m[0])}</span><span class="muted" style="font-family:'JetBrains Mono';font-size:12px">${esc(m[1]||'planned meal')}</span></div>`).join('')}`)).join('')}
+      <div class="info-box" style="margin-bottom:10px">${p.foodTip||dietTip(st.profile)}</div>
+      ${(p.meals||[]).map(m=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px"><span>${esc(m[0])}</span><span class="muted" style="font-family:'JetBrains Mono';font-size:12px">${esc(m[1]||'planned meal')}${m[2]?` · ${m[2]}g protein`:''}</span></div>`).join('')}`)).join('')}
   </main>`;
 }
 
@@ -550,8 +719,11 @@ function SettingsScreen(){
       </div>
       <div id="s_status" style="margin-top:10px;font-size:13px"></div>`)}
     ${sect("Your Profile","👤","",`
-      <div>${Object.entries({Weight:st.profile.weightKg+' kg',Height:st.profile.heightCm+' cm',Age:st.profile.age,Sex:st.profile.sex,Activity:ACTIVITY[st.profile.activity]?.label,Goal:GOALS[st.profile.goal]?.label,Target:st.profile.goalKg+' kg'}).map(([k,v])=>`<span class="pill">${k}: ${v}</span>`).join('')}</div>
-      <button class="btn ghost full" style="margin-top:14px" onclick="if(confirm('Redo onboarding? Your logs are kept.')){set({profile:null,onbStep:0})}">Edit Profile</button>`)}
+      <div>${Object.entries({Weight:st.profile.weightKg+' kg',Height:st.profile.heightCm+' cm',Age:st.profile.age,Sex:st.profile.sex,Activity:ACTIVITY[st.profile.activity]?.label,Goal:GOALS[st.profile.goal]?.label,Target:st.profile.goalKg+' kg',Diet:DIET_OPTIONS[st.profile.diet||'veg'],Focus:FOCUS_OPTIONS[st.profile.focus||'balanced']}).map(([k,v])=>`<span class="pill">${k}: ${v}</span>`).join('')}</div>
+      <label>Diet preference</label><select id="p_diet">${Object.entries(DIET_OPTIONS).map(([k,l])=>`<option value="${k}" ${(st.profile.diet||'veg')===k?'selected':''}>${l}</option>`).join('')}</select>
+      <label>Training focus</label><select id="p_focus">${Object.entries(FOCUS_OPTIONS).map(([k,l])=>`<option value="${k}" ${(st.profile.focus||'balanced')===k?'selected':''}>${l}</option>`).join('')}</select>
+      <button class="btn full" style="margin-top:14px" onclick="SET.profilePrefs()">Save Diet / Focus</button>
+      <button class="btn ghost full" style="margin-top:8px" onclick="if(confirm('Redo onboarding? Your logs are kept.')){set({profile:null,onbStep:0})}">Redo Full Profile</button>`)}
     ${sect("Data","💾","",`
       <button class="btn ghost full" onclick="SET.export()">Export My Data (JSON)</button>
       <button class="btn danger full" style="margin-top:8px" onclick="if(confirm('Erase everything on this device?')){localStorage.clear();location.reload()}">Reset Everything</button>`)}
@@ -570,6 +742,7 @@ window.SET = {
     saveAISettings(settings);set({ai:settings});
     document.getElementById('s_status').innerHTML='<span style="color:var(--accent)">✓ Saved on this device.</span>';
   },
+  profilePrefs:()=>{const diet=document.getElementById('p_diet').value;const focus=document.getElementById('p_focus').value;set({profile:{...st.profile,diet,focus}});},
   test:async()=>{
     const provider=document.getElementById('s_prov').value;
     const apiKey=document.getElementById('s_key').value.trim();
@@ -641,14 +814,24 @@ function render(){
   if(st.aiOpen){const el=document.getElementById('msgs');if(el)setTimeout(()=>el.scrollTop=el.scrollHeight,50);}
 }
 
+
+function initPullRefresh(){
+  let startY=0,dist=0,pulling=false;
+  const el=()=>document.getElementById('pullRefresh');
+  window.addEventListener('touchstart',e=>{if(window.scrollY===0){startY=e.touches[0].clientY;dist=0;pulling=true;}},{passive:true});
+  window.addEventListener('touchmove',e=>{if(!pulling)return;dist=e.touches[0].clientY-startY;if(dist>8&&window.scrollY===0){const x=el();if(x){x.classList.add('show');x.textContent=dist>85?'Release to refresh':'Pull to refresh';x.style.transform=`translate(-50%,${Math.min(dist-70,38)}px)`;}}},{passive:true});
+  window.addEventListener('touchend',()=>{const x=el();if(pulling&&dist>85){if(x)x.textContent='Refreshing…';location.reload();return;}if(x){x.classList.remove('show');x.style.transform='translate(-50%,-70px)';}pulling=false;dist=0;},{passive:true});
+}
+
 // expose for inline handlers
-Object.assign(window,{set,toggle,mut,upBody,rmBody,sendAI,execAction,todayIdx});
+Object.assign(window,{set,toggle,mut,upBody,rmBody,sendAI,execAction,todayIdx,buildDayFocus,estimateProtein});
 // st must be a LIVE getter — Object.assign would invoke and freeze it, so define explicitly
 Object.defineProperty(window,'st',{get(){return st;},configurable:true});
 
 // register service worker for offline/PWA
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 
+initPullRefresh();
 render();
 </script>
 </body>

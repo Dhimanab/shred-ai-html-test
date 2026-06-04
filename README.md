@@ -10,8 +10,9 @@ No build step. No backend. No cost. Drop it on GitHub Pages and install it to yo
 
 - **Onboarding** asks weight, height, age, sex, activity, and goal.
 - **Calorie engine (100% offline math)** — Mifflin-St Jeor BMR → TDEE → goal-adjusted calories + protein/carb/fat macros + water target. Recalculates automatically as your logged weight changes.
-- **The Plan** — a proven 7-day split (same for everyone); your *calories* are what's personalised.
-- **AI agent** — a chat coach that can actually operate the app: mark exercises/habits done, add or remove exercises, log your weight, write notes, navigate screens. Toggle **Agent mode** for instant actions, or off for Apply/Skip confirmation.
+- **The Plan** — a personalised 7-day split generated from age, sex, weight, goal, diet preference, and training focus using a 200+ exercise library.
+- **AI agent** — a chat coach that can operate the app: mark exercises/habits done, replace today with legs/upper/no-chest/cardio focus, add/remove exercises, log food with protein, adjust today's macro target, log weight, write notes, and navigate screens. Toggle **Agent mode** for instant actions, or off for Apply/Skip confirmation.
+- **Food + Protein Tracking** — food log updates protein gained vs protein needed in real time, with manual protein entry or automatic estimates from food names.
 - **Body + Progress** — weight history, 7-day average, trend chart, weekly completion, training history.
 - **Installable PWA** — add to home screen, opens fullscreen, works offline (the AI chat needs internet).
 
