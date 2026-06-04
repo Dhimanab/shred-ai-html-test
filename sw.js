@@ -1,7 +1,7 @@
 // Shred service worker — offline-first for the app shell.
 // The AI calls always hit the network (and fail gracefully offline);
 // everything else (UI, calorie engine) works with no connection.
-const CACHE = "shred-v2-personalised";
+const CACHE = "shred-v3-mobile-agent";
 const ASSETS = [
   "./",
   "./index.html",

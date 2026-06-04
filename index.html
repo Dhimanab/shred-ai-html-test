@@ -53,15 +53,20 @@ button,input,select,textarea{font-family:inherit}
 .card-body{padding:15px 16px}
 .warmup{border-left:3px solid var(--warn);color:var(--warn);background:#f5a6231a;border-radius:0 10px 10px 0;margin-bottom:10px;padding:10px 12px;font-size:13px}
 .row{display:flex;align-items:center;gap:8px;border-bottom:1px solid #ffffff0d}.row:last-child{border-bottom:none}
-.check-row{cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:12px 0;flex:1}
-.check{border:2px solid #343443;border-radius:9px;flex:0 0 27px;width:27px;height:27px;display:flex;justify-content:center;align-items:center;font-weight:900;transition:all .2s;color:transparent;font-size:14px}
+.check-row{cursor:pointer;display:flex;flex-direction:row-reverse;align-items:center;gap:12px;padding:12px 0;flex:1;min-width:0;justify-content:space-between}
+.check-row>div:not(.check),.check-row>b{flex:1;min-width:0}
+.check{border:2px solid #343443;border-radius:9px;flex:0 0 31px;width:31px;height:31px;display:flex;justify-content:center;align-items:center;font-weight:900;transition:all .2s;color:transparent;font-size:15px;margin-left:8px}
 .check.done{background:var(--accent);border-color:var(--accent);color:#000}
-.check-row b{font-size:14px;font-weight:600}
-.check-row small{color:var(--muted);margin-top:3px;font-family:'JetBrains Mono';font-size:12px;display:block}
+.check-row b{font-size:14px;font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+.check-row small{color:var(--muted);margin-top:3px;font-family:'JetBrains Mono';font-size:12px;display:block;line-height:1.45;overflow-wrap:anywhere}
 .strike{color:var(--muted);text-decoration:line-through}
 .info-box{white-space:pre-line;color:#b8d4ff;background:#4da8ff1a;border:1px solid #4da8ff40;border-radius:14px;padding:13px;font-size:13px;line-height:1.6}
 .icon-danger{width:34px;height:34px;color:var(--danger);background:#ff4d4d12;border:1px solid #ff4d4d55;border-radius:10px;flex-shrink:0;display:flex;justify-content:center;align-items:center;cursor:pointer}
 .add-box{border:1px dashed var(--border);background:#ffffff06;border-radius:14px;display:flex;gap:8px;margin-top:14px;padding:12px;align-items:center;flex-wrap:wrap}
+.food-add-box{border:1px dashed var(--border);background:#ffffff06;border-radius:16px;display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px;padding:12px}
+.food-add-title{color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:1.2px;font-weight:800}
+.food-add-box .food-mini-row{display:grid;grid-template-columns:112px 1fr;gap:8px}
+.food-add-box .btn{min-height:46px;border-radius:14px}
 input,select,textarea{border:1px solid var(--border);background:#ffffff0a;color:var(--text);border-radius:13px;padding:12px 13px;font-size:16px;width:100%;outline:none}
 input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 textarea{resize:vertical;min-height:90px}
@@ -147,7 +152,8 @@ nav button.ai-tab.active{color:var(--ai)}
 .link{color:var(--ai);text-decoration:none;border-bottom:1px solid var(--aiBorder)}
 .pull-refresh{position:fixed;top:calc(env(safe-area-inset-top,0) + 8px);left:50%;z-index:60;transform:translate(-50%,-70px);background:var(--card);border:1px solid var(--accent2);color:var(--accent);border-radius:999px;padding:9px 14px;font-size:12px;font-weight:800;box-shadow:0 8px 30px #0008;transition:transform .2s,opacity .2s;opacity:0}
 .pull-refresh.show{opacity:1}
-@media(max-width:560px){.hero h1{font-size:38px}.macro-grid{gap:8px}.onb h1{font-size:44px}}
+@media(min-width:700px){.food-add-box{grid-template-columns:2fr 110px 1fr auto;align-items:center}.food-add-title{grid-column:1/-1}.food-add-box .food-mini-row{display:contents}.food-add-box .btn{width:auto;padding-left:18px;padding-right:18px}}
+@media(max-width:560px){.page{padding:14px}.hero h1{font-size:38px}.macro-grid{gap:8px}.macro b{font-size:17px}.onb h1{font-size:44px}.card-body{padding:14px}.food-add-box input{font-size:15px}.food-add-box .food-mini-row{grid-template-columns:100px 1fr}.ai-fab{bottom:84px;right:16px;width:52px;height:52px}.row{gap:6px}.icon-danger{width:32px;height:32px}}
 </style>
 </head>
 <body>
@@ -339,13 +345,16 @@ const save_=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const clone=o=>JSON.parse(JSON.stringify(o));
 const wkStart=()=>{const t=new Date();t.setHours(12,0,0,0);const n=t.getDay();t.setDate(t.getDate()-n+(n===0?-6:1));return t;};
 const dayDate=i=>{const t=wkStart();t.setDate(t.getDate()+i);return dstr(t);};
-const blank=(date,di)=>({date,dayIdx:di,doneEx:{},doneMeal:{},doneHab:{},delEx:[],delMeal:[],custEx:[],custMeal:[],overrideEx:null,targetOverride:{},note:""});
+const blank=(date,di)=>({date,dayIdx:di,doneEx:{},doneMeal:{},doneHab:{},delEx:[],delMeal:[],custEx:[],custMeal:[],overrideEx:null,overrideMeal:null,targetOverride:{},note:""});
 const getLog=(L,date,di)=>L[date]||blank(date,di);
 const mealObj=(m,i,planned=true)=>Array.isArray(m)?{id:`p_meal_${i}`,name:m[0],sets:m[1]||"planned meal",proteinG:+m[2]||estimateProtein(m[0]),kcal:+m[3]||0,planned}:{...m,id:m.id||`p_meal_${i}`,planned};
 const exObj=(e,i,planned=true)=>Array.isArray(e)?{id:`p_ex_${i}`,name:e[0],sets:e[1]||"—",planned}:{...e,id:e.id||`p_ex_${i}`,planned};
 const exsOf=(di,log)=>[...((log.overrideEx||PLAN[di].exercises)||[]).map((e,i)=>exObj(e,i,true)),...(log.custEx||[])].filter(e=>!(log.delEx||[]).includes(e.id));
-const mealsOf=(di,log)=>[...((PLAN[di].meals)||[]).map((m,i)=>mealObj(m,i,true)),...(log.custMeal||[])].filter(m=>!(log.delMeal||[]).includes(m.id));
-const estimateProtein=s=>{s=String(s||"").toLowerCase();let g=0;if(/whey|protein/.test(s))g+=25;if(/chicken|fish|tuna|meat/.test(s))g+=35;if(/paneer|tofu|soya/.test(s))g+=28;if(/egg/.test(s))g+=18;if(/dal|rajma|chole|chana|sprout|moong/.test(s))g+=16;if(/curd|greek|lassi|milk/.test(s))g+=10;return g||0;};
+const mealsOf=(di,log)=>[...((log.overrideMeal||PLAN[di].meals)||[]).map((m,i)=>mealObj(m,i,true)),...(log.custMeal||[])].filter(m=>!(log.delMeal||[]).includes(m.id));
+const estimateProtein=s=>{s=String(s||"").toLowerCase();let g=0;if(/whey|protein/.test(s))g+=25;if(/chicken|fish|tuna|meat|kebab/.test(s))g+=35;if(/paneer|tofu|soya/.test(s))g+=28;if(/egg|omelette|bhurji/.test(s))g+=18;if(/dal|rajma|chole|chana|sprout|moong|besan/.test(s))g+=16;if(/curd|greek|lassi|milk|latte/.test(s))g+=10;return g||0;};
+const isNonVegMeal=m=>/chicken|fish|tuna|meat|kebab|mutton|beef|pork|turkey|prawn|shrimp|egg|omelette|bhurji|boiled egg/i.test(`${m?.name||m?.[0]||""} ${m?.sets||m?.[1]||""}`);
+const isMeatMeal=m=>/chicken|fish|tuna|meat|kebab|mutton|beef|pork|turkey|prawn|shrimp/i.test(`${m?.name||m?.[0]||""} ${m?.sets||m?.[1]||""}`);
+const dietOk=(m,diet)=>diet==="veg"?!isNonVegMeal(m):diet==="egg"?!isMeatMeal(m):true;
 const proteinDone=(di,log)=>mealsOf(di,log).filter(m=>log.doneMeal?.[m.id]).reduce((s,m)=>s+(+m.proteinG||0),0);
 const dayTargets=(date,di)=>{const t=targets();const o=getLog(st.L,date,di).targetOverride||{};return t?{...t,...o}:null;};
 const prog=(di,log)=>{const ex=exsOf(di,log), meals=mealsOf(di,log), tot=ex.length+meals.length+HABITS.length;if(!tot)return 0;const d=ex.filter(e=>log.doneEx?.[e.id]).length+meals.filter(m=>log.doneMeal?.[m.id]).length+HABITS.filter(([k])=>log.doneHab?.[k]).length;return Math.round(d/tot*100);};
@@ -394,24 +403,26 @@ USER PROFILE: ${st.profile?JSON.stringify(st.profile):"not set"}
 CALCULATED TARGETS (offline math, authoritative): ${t?`${t.calories} kcal/day, ${t.proteinG}g protein, ${t.carbG}g carbs, ${t.fatG}g fat, ${t.waterMl}ml water. Goal: ${t.goalLabel}. Est ${t.weeklyKg}kg/week.`:"not set"}
 DIET/FITNESS PREFERENCES: ${st.profile?`${DIET_OPTIONS[st.profile.diet||"veg"]||"Vegetarian"}; focus ${FOCUS_OPTIONS[st.profile.focus||"balanced"]||"Balanced"}; exercise library ${EXERCISE_COUNT}+ exercises.`:"not set"}
 
-Each user message includes a JSON APP STATE with today's exercises, meals, protein logged vs protein target, habits, weekly progress, and recent body logs. Use real ids. Recommend exercises and food based on goal, sex, age, body target, diet preference, focus, weak points, schedule, and progress; do not blindly keep the default plan.
+Each user message includes a JSON APP STATE with today's exercises, meals, protein logged vs protein target, habits, weekly progress, and recent body logs. Use real ids where possible, but name/category matching also works. Recommend exercises and food based on goal, sex, age, body target, diet preference, focus, weak points, schedule, and progress; do not blindly keep the default plan.
 
 You are an AGENT — you operate the app via actions. Append ONE action at the very END of your reply, raw, last line, format:
 ACTION:{"type":"<type>","payload":<payload>}
 
 Types:
-- log_workout {date,exerciseIds:[]}  | untick_workout {date,exerciseIds:[]}
-- log_meal {date,mealIds:[]}          | untick_meal {date,mealIds:[]}
-- log_habit {date,habitKeys:[]}       | untick_habit {date,habitKeys:[]}
-- add_exercise {date,name,sets}        | remove_exercise {date,exerciseId}
+- log_workout {date,exerciseIds:[],exerciseNames?:[]}  | untick_workout {date,exerciseIds:[],exerciseNames?:[]}
+- log_meal {date,mealIds:[],mealNames?:[]}             | untick_meal {date,mealIds:[],mealNames?:[]}
+- log_habit {date,habitKeys:[]}                        | untick_habit {date,habitKeys:[]}
+- add_exercise {date,name,sets}                         | remove_exercise {date,exerciseId?,exerciseIds?,exerciseName?,exerciseNames?,contains?}
 - replace_exercises {date,focus:"legs|upper|no_chest|fat_loss|balanced"}
-- add_meal {date,name,sets,proteinG?,kcal?} | remove_meal {date,mealId}
-- log_food {date,name,proteinG?,kcal?,note?}  // adds to food log and marks eaten
+- add_meal {date,name,sets,proteinG?,kcal?}             | remove_meal {date,mealId?,mealIds?,mealName?,mealNames?,contains?,category?:"nonveg"}
+- replace_meals {date,diet:"veg|egg|nonveg"}       // use when asked to remove non-veg and add veg/egg options for today
+- log_food {date,name,proteinG?,kcal?,note?}            // adds to food log and marks eaten
 - set_day_target {date,proteinG?,calories?,carbG?,fatG?}
 - log_body {date,weight,waist?,note?}
-- add_note {date,note}                 | clear_day {date}
-- goto_day {dayIdx:0-6}                | goto_screen {screen:"today|body|progress|plan|settings"}
+- add_note {date,note}                                  | clear_day {date}
+- goto_day {dayIdx:0-6}                                 | goto_screen {screen:"today|body|progress|plan|settings"}
 
+Diet rules: if diet is veg, never add egg/chicken/fish/meat. If diet is egg, eggs are allowed but chicken/fish/meat are not. If the user says delete/remove non-veg and add veg options, use replace_meals with diet veg.
 Rules: ONE action max, only when it does what the user asked; text first, ACTION last. Use today's date from APP STATE unless told otherwise. Keep replies under 110 words. Never invent weight numbers. For food logs, include realistic proteinG when the user names food; ask only if impossible. Reference protein logged vs target when relevant.`;
 };
 
@@ -438,7 +449,8 @@ const describe=a=>{const p=a.payload||{};switch(a.type){
   case"add_meal":return`Add meal "${p.name}"${p.proteinG?` · ${p.proteinG}g protein`:""}`;
   case"log_food":return`Log food "${p.name}"${p.proteinG?` · ${p.proteinG}g protein`:""}`;
   case"set_day_target":return`Update today's targets`;
-  case"remove_meal":return`Remove a meal`;
+  case"remove_meal":return`Remove meal(s)`;
+  case"replace_meals":return`Replace today with ${DIET_OPTIONS[p.diet]||p.diet||"new"} meals`;
   case"log_body":return`Log ${p.weight}kg${p.waist?`, ${p.waist}"`:""}`;
   case"add_note":return`Set today's note`;
   case"clear_day":return`Clear ${p.date}`;
@@ -446,24 +458,52 @@ const describe=a=>{const p=a.payload||{};switch(a.type){
   case"goto_screen":return`Open ${p.screen}`;
   default:return a.type;}};
 
+function tokensFrom(...vals){return vals.flatMap(v=>Array.isArray(v)?v:[v]).filter(Boolean).map(v=>String(v).toLowerCase().trim()).filter(Boolean);}
+function resolveItemIds(items,p,type){
+  const idKeys=type==="meal"?[p.mealId,p.mealIds,p.ids]:[p.exerciseId,p.exerciseIds,p.ids];
+  const nameKeys=type==="meal"?[p.mealName,p.mealNames,p.name,p.names,p.contains,p.pattern]:[p.exerciseName,p.exerciseNames,p.name,p.names,p.contains,p.pattern];
+  const ids=new Set(tokensFrom(...idKeys));
+  const names=tokensFrom(...nameKeys);
+  items.forEach(it=>{
+    const id=String(it.id||"").toLowerCase();
+    const name=String(it.name||"").toLowerCase();
+    if(ids.has(id)) ids.add(it.id);
+    if(names.some(n=>name.includes(n)||n.includes(name))) ids.add(it.id);
+  });
+  return [...ids].filter(id=>items.some(it=>it.id===id));
+}
+function removeIdsFromObj(o,ids){const n={...(o||{})};ids.forEach(id=>delete n[id]);return n;}
+function cleanDietMeals(profile,di,diet){
+  const prof={...fallbackProfile(profile),diet:diet||profile?.diet||"veg"};
+  return mealsFor(prof,di).filter(m=>dietOk(m,prof.diet));
+}
+function localActionFromText(text){
+  const x=String(text||"").toLowerCase(), date=dayDate(st.dayIdx);
+  if(/(delete|remove|clear|replace).*(non\s*-?veg|nonveg|chicken|fish|meat|egg)/.test(x)&&/(veg|vegetarian)/.test(x)) return {type:"replace_meals",payload:{date,diet:"veg"}};
+  if(/(veg|vegetarian).*(option|meal|food|diet)/.test(x)&&/(today|day|replace|change|add)/.test(x)) return {type:"replace_meals",payload:{date,diet:"veg"}};
+  if(/(egg).*(option|meal|food|diet)/.test(x)&&/(today|day|replace|change|add)/.test(x)) return {type:"replace_meals",payload:{date,diet:"egg"}};
+  if(/(delete|remove|clear).*(non\s*-?veg|nonveg|chicken|fish|meat)/.test(x)) return {type:"remove_meal",payload:{date,category:"nonveg"}};
+  return null;
+}
 function execAction(a){
   const p=a.payload||{}, date=p.date||dayDate(st.dayIdx);
   const d=new Date(date+"T12:00:00").getDay(), di=d===0?6:d-1;
   const setK=(o,ks,v)=>({...o,...Object.fromEntries((ks||[]).map(k=>[k,v]))});
   switch(a.type){
-    case"log_workout":mut(date,di,l=>({...l,doneEx:setK(l.doneEx,p.exerciseIds,true)}));break;
-    case"untick_workout":mut(date,di,l=>({...l,doneEx:setK(l.doneEx,p.exerciseIds,false)}));break;
-    case"log_meal":mut(date,di,l=>({...l,doneMeal:setK(l.doneMeal,p.mealIds,true)}));break;
-    case"untick_meal":mut(date,di,l=>({...l,doneMeal:setK(l.doneMeal,p.mealIds,false)}));break;
+    case"log_workout":mut(date,di,l=>{const ids=resolveItemIds(exsOf(di,l),p,"exercise");return {...l,doneEx:setK(l.doneEx,ids.length?ids:p.exerciseIds,true)}});break;
+    case"untick_workout":mut(date,di,l=>{const ids=resolveItemIds(exsOf(di,l),p,"exercise");return {...l,doneEx:setK(l.doneEx,ids.length?ids:p.exerciseIds,false)}});break;
+    case"log_meal":mut(date,di,l=>{const ids=resolveItemIds(mealsOf(di,l),p,"meal");return {...l,doneMeal:setK(l.doneMeal,ids.length?ids:p.mealIds,true)}});break;
+    case"untick_meal":mut(date,di,l=>{const ids=resolveItemIds(mealsOf(di,l),p,"meal");return {...l,doneMeal:setK(l.doneMeal,ids.length?ids:p.mealIds,false)}});break;
     case"log_habit":mut(date,di,l=>({...l,doneHab:setK(l.doneHab,p.habitKeys,true)}));break;
     case"untick_habit":mut(date,di,l=>({...l,doneHab:setK(l.doneHab,p.habitKeys,false)}));break;
     case"add_exercise":mut(date,di,l=>({...l,custEx:[...(l.custEx||[]),{id:"ai_"+Date.now(),name:p.name,sets:p.sets||"—",planned:false}]}));break;
-    case"remove_exercise":mut(date,di,l=>({...l,custEx:(l.custEx||[]).filter(x=>x.id!==p.exerciseId),delEx:[...(l.delEx||[]),p.exerciseId]}));break;
+    case"remove_exercise":mut(date,di,l=>{const ids=resolveItemIds(exsOf(di,l),p,"exercise");return {...l,custEx:(l.custEx||[]).filter(x=>!ids.includes(x.id)),delEx:[...new Set([...(l.delEx||[]),...ids])],doneEx:removeIdsFromObj(l.doneEx,ids)}});break;
     case"replace_exercises":mut(date,di,l=>({...l,overrideEx:buildDayFocus(st.profile,p.focus||"balanced"),delEx:[],doneEx:{}}));break;
     case"add_meal":mut(date,di,l=>({...l,custMeal:[...(l.custMeal||[]),{id:"meal_"+Date.now(),name:p.name,sets:p.sets||"custom meal",proteinG:+p.proteinG||estimateProtein(p.name),kcal:+p.kcal||0,planned:false}]}));break;
     case"log_food":{const id="food_"+Date.now();mut(date,di,l=>({...l,custMeal:[...(l.custMeal||[]),{id,name:p.name,sets:p.note||"logged food",proteinG:+p.proteinG||estimateProtein(p.name),kcal:+p.kcal||0,planned:false}],doneMeal:{...l.doneMeal,[id]:true}}));break;}
+    case"replace_meals":mut(date,di,l=>{const diet=p.diet||"veg";const repl=cleanDietMeals(st.profile,di,diet);const keep=(l.custMeal||[]).filter(m=>dietOk(m,diet));const keepIds=keep.map(m=>m.id);const plannedIds=mealsOf(di,l).filter(m=>m.planned).map(m=>m.id);return {...l,overrideMeal:repl,delMeal:[],custMeal:keep,doneMeal:Object.fromEntries(Object.entries(l.doneMeal||{}).filter(([id])=>keepIds.includes(id)&&dietOk(keep.find(m=>m.id===id),diet))),note:`${l.note?l.note+"\n":""}Meals changed to ${DIET_OPTIONS[diet]||diet} for today.`}});break;
     case"set_day_target":mut(date,di,l=>({...l,targetOverride:{...(l.targetOverride||{}),...(p.proteinG?{proteinG:+p.proteinG}:{}) ,...(p.calories?{calories:+p.calories}:{}) ,...(p.carbG?{carbG:+p.carbG}:{}) ,...(p.fatG?{fatG:+p.fatG}:{})}}));break;
-    case"remove_meal":mut(date,di,l=>({...l,custMeal:(l.custMeal||[]).filter(x=>x.id!==p.mealId),delMeal:[...(l.delMeal||[]),p.mealId]}));break;
+    case"remove_meal":mut(date,di,l=>{let ids=resolveItemIds(mealsOf(di,l),p,"meal");if(p.category==="nonveg"||p.removeNonVeg) ids=[...new Set([...ids,...mealsOf(di,l).filter(isNonVegMeal).map(m=>m.id)])];return {...l,custMeal:(l.custMeal||[]).filter(x=>!ids.includes(x.id)),delMeal:[...new Set([...(l.delMeal||[]),...ids])],doneMeal:removeIdsFromObj(l.doneMeal,ids)}});break;
     case"log_body":upBody({date,weight:+p.weight,waist:p.waist||"",note:p.note||""});break;
     case"add_note":mut(date,di,l=>({...l,note:p.note}));break;
     case"clear_day":mut(date,di,l=>({...l,doneEx:{},doneMeal:{},doneHab:{}}));break;
@@ -474,6 +514,13 @@ function execAction(a){
 
 async function sendAI(text){
   if(!text.trim()||st.aiLoading)return;
+  const direct=localActionFromText(text.trim());
+  if(direct){
+    const userMsg={role:"user",text:text.trim(),time:new Date()};
+    execAction(direct);
+    set({aiMsgs:[...st.aiMsgs,userMsg,{role:"ai",text:"Done — I updated today's plan/food log on your phone. ✅",time:new Date(),applied:direct}],aiInput:"",aiLoading:false},true);
+    return;
+  }
   if(!st.ai?.apiKey){
     set({aiMsgs:[...st.aiMsgs,{role:"user",text,time:new Date()},{role:"ai",text:"⚠️ No API key yet. Open Settings → AI and paste a free key (Groq or Gemini). Takes 30 seconds.",time:new Date()}],aiInput:""},true);
     return;
@@ -488,6 +535,9 @@ async function sendAI(text){
     const m=raw.match(/ACTION:\s*(\{[\s\S]*\})\s*$/);
     let action=null,clean=raw;
     if(m){clean=raw.slice(0,m.index).trim();try{action=JSON.parse(m[1]);}catch{}}
+    const local=localActionFromText(userMsg.text);
+    if(!action&&local){action=local; if(!clean||clean===raw) clean="Done — I changed today's meals based on your request. ✅";}
+    if(action?.type==="remove_meal"&&/veg|vegetarian/i.test(userMsg.text)&&/add|replace|option/i.test(userMsg.text)) action={type:"replace_meals",payload:{date:dayDate(st.dayIdx),diet:"veg"}};
     if(!clean)clean="Done. ✅";
     if(action&&st.agent){execAction(action);set({aiMsgs:[...st.aiMsgs,{role:"ai",text:clean,time:new Date(),applied:action}],aiLoading:false},true);}
     else set({aiMsgs:[...st.aiMsgs,{role:"ai",text:clean,time:new Date(),action}],aiLoading:false},true);
@@ -616,8 +666,8 @@ function TodayScreen(){
   const pct=prog(di,log);
 
   const tabs=PLAN.map((pp,i)=>`<button class="tab${i===di?' active':''}" onclick="set({dayIdx:${i}})">${pp.short}${i===todayIdx()?'<span class="dot"></span>':''}</button>`).join('');
-  const exRows=ex.map(e=>`<div class="row"><div class="check-row" onclick="toggle('${date}',${di},'doneEx','${e.id}')"><div class="check${log.doneEx?.[e.id]?' done':''}">✓</div><div><b class="${log.doneEx?.[e.id]?'strike':''}">${esc(e.name)}</b><small>${esc(e.sets)}</small></div></div>${!e.planned?`<div class="icon-danger" onclick="mut('${date}',${di},l=>({...l,custEx:(l.custEx||[]).filter(x=>x.id!=='${e.id}'),delEx:[...(l.delEx||[]),'${e.id}']}))">🗑</div>`:''}</div>`).join('');
-  const mealRows=meals.map(m=>`<div class="row"><div class="check-row" onclick="toggle('${date}',${di},'doneMeal','${m.id}')"><div class="check${log.doneMeal?.[m.id]?' done':''}">✓</div><div><b class="${log.doneMeal?.[m.id]?'strike':''}">${esc(m.name)}</b><small>${esc(m.sets||'planned meal')}${m.proteinG?` · ${m.proteinG}g protein`:''}</small></div></div>${!m.planned?`<div class="icon-danger" onclick="mut('${date}',${di},l=>({...l,custMeal:(l.custMeal||[]).filter(x=>x.id!=='${m.id}'),delMeal:[...(l.delMeal||[]),'${m.id}']}))">🗑</div>`:''}</div>`).join('');
+  const exRows=ex.map(e=>`<div class="row"><div class="check-row" onclick="toggle('${date}',${di},'doneEx','${e.id}')"><div class="check${log.doneEx?.[e.id]?' done':''}">✓</div><div><b class="${log.doneEx?.[e.id]?'strike':''}">${esc(e.name)}</b><small>${esc(e.sets)}</small></div></div>${!e.planned?`<div class="icon-danger" onclick="mut('${date}',${di},l=>({...l,custEx:(l.custEx||[]).filter(x=>x.id!=='${e.id}'),delEx:[...(l.delEx||[]),'${e.id}'],doneEx:removeIdsFromObj(l.doneEx,['${e.id}'])}))">🗑</div>`:''}</div>`).join('');
+  const mealRows=meals.map(m=>`<div class="row"><div class="check-row" onclick="toggle('${date}',${di},'doneMeal','${m.id}')"><div class="check${log.doneMeal?.[m.id]?' done':''}">✓</div><div><b class="${log.doneMeal?.[m.id]?'strike':''}">${esc(m.name)}</b><small>${esc(m.sets||'planned meal')}${m.proteinG?` · ${m.proteinG}g protein`:''}</small></div></div>${!m.planned?`<div class="icon-danger" onclick="mut('${date}',${di},l=>({...l,custMeal:(l.custMeal||[]).filter(x=>x.id!=='${m.id}'),delMeal:[...(l.delMeal||[]),'${m.id}'],doneMeal:removeIdsFromObj(l.doneMeal,['${m.id}'])}))">🗑</div>`:''}</div>`).join('');
   const habRows=HABITS.map(([k,ic,lb])=>`<div class="check-row" onclick="toggle('${date}',${di},'doneHab','${k}')"><div class="check${log.doneHab?.[k]?' done':''}">✓</div><b class="${log.doneHab?.[k]?'strike':''}">${ic} ${lb}</b></div>`).join('');
 
   return `<main class="page">
@@ -638,7 +688,7 @@ function TodayScreen(){
     ${sect("Workout Log","🏋️",`${dEx}/${ex.length}`,`${exRows||'<p class="muted">Rest day — no lifting.</p>'}
       <div class="add-box"><input id="nx" placeholder="Exercise" style="flex:2"><input id="nxs" placeholder="3 × 12" style="flex:1;min-width:80px"><button class="btn" onclick="(()=>{const n=document.getElementById('nx').value.trim();if(n)mut('${date}',${di},l=>({...l,custEx:[...(l.custEx||[]),{id:'c_'+Date.now(),name:n,sets:document.getElementById('nxs').value.trim()||'—',planned:false}]}))})()">+</button></div>`)}
     ${sect("Food Log","🍴",`${dMeal}/${meals.length}`,`${mealRows||'<p class="muted">No meals planned.</p>'}
-      <div class="add-box"><input id="nm" placeholder="Add what you ate, e.g. chicken rice bowl" style="flex:2"><input id="nmp" type="number" inputmode="numeric" placeholder="protein g" style="flex:1;min-width:90px"><input id="nms" placeholder="meal note" style="flex:1;min-width:90px"><button class="btn" onclick="(()=>{const n=document.getElementById('nm').value.trim();if(n){const id='m_'+Date.now();const pg=+document.getElementById('nmp').value||estimateProtein(n);mut('${date}',${di},l=>({...l,custMeal:[...(l.custMeal||[]),{id,name:n,sets:document.getElementById('nms').value.trim()||'logged food',proteinG:pg,planned:false}],doneMeal:{...l.doneMeal,[id]:true}}))}})()">Log</button></div><div class="info-box" style="margin-top:10px">Protein updates live: ${pDone}g logged / ${t?.proteinG||0}g target. Add protein grams manually or let the app estimate from the food name.</div>`)}
+      <div class="food-add-box"><div class="food-add-title">Quick food log</div><input id="nm" class="food-name" placeholder="Food / meal name"><div class="food-mini-row"><input id="nmp" type="number" inputmode="numeric" placeholder="Protein g"><input id="nms" placeholder="Note optional"></div><button class="btn full" onclick="(()=>{const n=document.getElementById('nm').value.trim();if(n){const id='m_'+Date.now();const pg=+document.getElementById('nmp').value||estimateProtein(n);mut('${date}',${di},l=>({...l,custMeal:[...(l.custMeal||[]),{id,name:n,sets:document.getElementById('nms').value.trim()||'logged food',proteinG:pg,planned:false}],doneMeal:{...l.doneMeal,[id]:true}}))}})()">Log food</button></div><div class="info-box" style="margin-top:10px">Protein updates live: ${pDone}g logged / ${t?.proteinG||0}g target. Add protein grams manually or let the app estimate from the food name.</div>`)}
     ${p.cardio?sect("Cardio","🚶","",`<div class="info-box">${p.cardio}</div>`):''}
     ${sect("Daily Habits","📋",`${dH}/${HABITS.length}`,habRows)}
     ${sect("Note","📝","",`<textarea placeholder="How did today go?" onchange="mut('${date}',${di},l=>({...l,note:this.value}))">${esc(log.note||'')}</textarea>`)}
@@ -824,7 +874,7 @@ function initPullRefresh(){
 }
 
 // expose for inline handlers
-Object.assign(window,{set,toggle,mut,upBody,rmBody,sendAI,execAction,todayIdx,buildDayFocus,estimateProtein});
+Object.assign(window,{set,toggle,mut,upBody,rmBody,sendAI,execAction,todayIdx,buildDayFocus,estimateProtein,removeIdsFromObj});
 // st must be a LIVE getter — Object.assign would invoke and freeze it, so define explicitly
 Object.defineProperty(window,'st',{get(){return st;},configurable:true});
 
