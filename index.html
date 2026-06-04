@@ -21,7 +21,7 @@
   --ai:#a855f7;--ai2:#7c3aed;--aiBg:#a855f714;--aiBorder:#a855f740;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+html,body{background:var(--bg);color:var(--text);overscroll-behavior-y:contain;font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font-family:inherit}
 .app{min-height:100vh;min-height:100dvh;padding-bottom:calc(88px + env(safe-area-inset-bottom,0))}
 .header{position:sticky;top:0;z-index:10;background:#080809eb;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:calc(env(safe-area-inset-top,0) + 12px) 16px 12px;display:flex;justify-content:space-between;align-items:center}
@@ -240,6 +240,46 @@ const MEAL_BANK = {
   }
 };
 
+
+// Extra generated food library so the app backend has 200+ food choices, not just 4 fixed meals.
+// The AI can request a diet switch, but this local engine chooses clean options and protein values itself.
+const FOOD_TEMPLATES = {
+  veg: {
+    breakfast: {protein:[["paneer bhurji",28,260],["tofu scramble",26,220],["soya granules upma",30,300],["Greek curd bowl",24,180],["moong dal cheela",24,280],["besan chilla",22,260],["sprouts + curd bowl",24,240]], carb:[["2 rotis",6,220],["oats",7,190],["brown bread toast",6,170],["poha",5,230],["idli",6,220]], extra:["fruit","mint chutney","salad","black coffee","curd"]},
+    lunch: {protein:[["paneer tikka",32,320],["tofu curry",30,260],["soya chunks curry",38,320],["rajma",24,270],["chole",24,290],["mixed dal",22,240],["dal makhani controlled oil",24,330]], carb:[["rice",5,250],["2 rotis",6,220],["quinoa",8,220],["millet roti",6,210],["brown rice",5,230]], extra:["salad","curd","soup","vegetables","raita"]},
+    snack: {protein:[["whey shake",25,130],["roasted chana",18,210],["sprouts chaat",20,220],["paneer cubes",24,250],["Greek curd",20,160],["soy milk smoothie",22,220],["lassi high protein",18,220]], carb:[["banana",1,100],["apple",0,90],["makhana",5,130],["toast",4,120],["oats",5,150]], extra:["black coffee","cinnamon","chia seeds","lemon","salt"]},
+    dinner: {protein:[["tofu bowl",32,280],["paneer tikka",34,330],["soya curry",40,330],["dal khichdi",24,330],["mixed dal",26,260],["rajma soup",24,250],["chole salad",24,300]], carb:[["rice",5,230],["roti",3,110],["2 rotis",6,220],["quinoa",8,220],["vegetable pulao",5,250]], extra:["salad","soup","curd","sauteed vegetables","raita"]}
+  },
+  egg: {
+    breakfast: {protein:[["3 egg omelette",30,320],["egg white bhurji",28,220],["2 eggs + Greek curd",30,280],["paneer egg wrap",38,420],["boiled eggs",24,240],["egg dal cheela",32,360],["omelette roll",30,360]], carb:[["toast",5,160],["2 rotis",6,220],["oats",7,190],["poha",5,230],["fruit",1,100]], extra:["salad","black coffee","curd","mint chutney","vegetables"]},
+    lunch: {protein:[["egg curry",30,330],["egg dal bowl",34,360],["paneer rice bowl",38,430],["tofu + egg whites",42,360],["soya pulao + eggs",42,460],["rajma + boiled eggs",36,430],["chole + egg whites",38,420]], carb:[["rice",5,250],["2 rotis",6,220],["quinoa",8,220],["brown rice",5,230],["millet roti",6,210]], extra:["salad","curd","soup","raita","vegetables"]},
+    snack: {protein:[["whey shake",25,130],["3 egg whites",18,90],["sprouts + boiled eggs",28,310],["protein coffee",25,160],["curd + chana",22,280],["egg white sandwich",24,260],["Greek curd bowl",22,170]], carb:[["banana",1,100],["toast",5,160],["makhana",5,130],["fruit",1,100],["oats",5,150]], extra:["black coffee","lemon","chia seeds","salt","cinnamon"]},
+    dinner: {protein:[["egg curry",32,340],["egg white bhurji",34,240],["paneer/tofu tikka",40,380],["soya chunks + eggs",45,430],["dal khichdi + omelette",36,480],["tofu egg bowl",42,380],["mixed dal + eggs",38,420]], carb:[["roti",3,110],["2 rotis",6,220],["rice",5,230],["quinoa",8,220],["vegetable pulao",5,250]], extra:["salad","soup","curd","sauteed vegetables","raita"]}
+  },
+  nonveg: {
+    breakfast: {protein:[["egg omelette",30,320],["chicken sandwich",36,360],["tuna toast",38,340],["egg bhurji",32,330],["chicken egg wrap",45,450],["Greek curd whey bowl",42,300],["turkey/chicken slices",35,260]], carb:[["toast",5,160],["2 rotis",6,220],["oats",7,190],["fruit",1,100],["poha",5,230]], extra:["salad","black coffee","curd","vegetables","mint chutney"]},
+    lunch: {protein:[["grilled chicken",50,360],["fish curry",44,330],["chicken tikka",48,340],["tuna rice bowl",45,330],["lean meat kebab",50,380],["egg chicken curry",48,430],["prawn curry",42,320]], carb:[["rice",5,250],["2 rotis",6,220],["brown rice",5,230],["quinoa",8,220],["millet roti",6,210]], extra:["salad","curd","soup","raita","vegetables"]},
+    snack: {protein:[["whey shake",25,130],["boiled eggs",24,230],["chicken tikka snack",35,300],["tuna salad",32,260],["Greek curd",22,170],["protein smoothie",32,330],["egg white sandwich",24,260]], carb:[["banana",1,100],["toast",5,160],["fruit",1,100],["makhana",5,130],["oats",5,150]], extra:["black coffee","lemon","salt","chia seeds","cinnamon"]},
+    dinner: {protein:[["grilled chicken",52,360],["fish fillet",46,320],["chicken soup",40,260],["egg/chicken salad",45,360],["chicken curry controlled oil",48,430],["tuna bowl",44,330],["prawn stir fry",42,320]], carb:[["roti",3,110],["2 rotis",6,220],["rice",5,230],["quinoa",8,220],["vegetable pulao",5,250]], extra:["salad","soup","curd","sauteed vegetables","raita"]}
+  }
+};
+function expandMealBank(){
+  Object.entries(FOOD_TEMPLATES).forEach(([diet,slots])=>{
+    Object.entries(slots).forEach(([slot,cfg])=>{
+      const arr=MEAL_BANK[diet][slot];
+      let i=0;
+      while(arr.length<20){
+        const p=cfg.protein[i%cfg.protein.length], c=cfg.carb[(i*2+1)%cfg.carb.length], ex=cfg.extra[(i*3+2)%cfg.extra.length];
+        const name=`${p[0]} + ${c[0]} + ${ex}`;
+        if(!arr.some(m=>m.name.toLowerCase()===name.toLowerCase())) arr.push({name,proteinG:p[1]+c[1],kcal:p[2]+c[2]+45});
+        i++;
+      }
+    });
+  });
+}
+expandMealBank();
+const FOOD_COUNT = Object.values(MEAL_BANK).reduce((sum,diet)=>sum+Object.values(diet).reduce((s,slot)=>s+slot.length,0),0);
+
 function fallbackProfile(profile){return {weightKg:80,heightCm:175,age:28,sex:"male",activity:"moderate",goal:"cut",goalKg:75,diet:"veg",focus:"balanced",...(profile||{})};}
 function goalMode(p){return (p.goal==="bulk"||p.goal==="lean")?"bulk":(p.goal==="maintain"?"maintain":"cut");}
 function seedFor(p){return ((+p.age||25)+Math.round(+p.weightKg||80)+String(p.sex||"").length+String(p.goal||"").length+String(p.focus||"").length)%17;}
@@ -401,7 +441,7 @@ const SYSTEM = () => {
 
 USER PROFILE: ${st.profile?JSON.stringify(st.profile):"not set"}
 CALCULATED TARGETS (offline math, authoritative): ${t?`${t.calories} kcal/day, ${t.proteinG}g protein, ${t.carbG}g carbs, ${t.fatG}g fat, ${t.waterMl}ml water. Goal: ${t.goalLabel}. Est ${t.weeklyKg}kg/week.`:"not set"}
-DIET/FITNESS PREFERENCES: ${st.profile?`${DIET_OPTIONS[st.profile.diet||"veg"]||"Vegetarian"}; focus ${FOCUS_OPTIONS[st.profile.focus||"balanced"]||"Balanced"}; exercise library ${EXERCISE_COUNT}+ exercises.`:"not set"}
+DIET/FITNESS PREFERENCES: ${st.profile?`${DIET_OPTIONS[st.profile.diet||"veg"]||"Vegetarian"}; focus ${FOCUS_OPTIONS[st.profile.focus||"balanced"]||"Balanced"}; exercise library ${EXERCISE_COUNT}+ exercises; food library ${FOOD_COUNT}+ foods.`:"not set"}
 
 Each user message includes a JSON APP STATE with today's exercises, meals, protein logged vs protein target, habits, weekly progress, and recent body logs. Use real ids where possible, but name/category matching also works. Recommend exercises and food based on goal, sex, age, body target, diet preference, focus, weak points, schedule, and progress; do not blindly keep the default plan.
 
@@ -422,7 +462,7 @@ Types:
 - add_note {date,note}                                  | clear_day {date}
 - goto_day {dayIdx:0-6}                                 | goto_screen {screen:"today|body|progress|plan|settings"}
 
-Diet rules: if diet is veg, never add egg/chicken/fish/meat. If diet is egg, eggs are allowed but chicken/fish/meat are not. If the user says delete/remove non-veg and add veg options, use replace_meals with diet veg.
+Diet rules: if diet is veg, never add egg/chicken/fish/meat. If diet is egg, eggs are allowed but chicken/fish/meat are not. If the user says delete/remove non-veg and add veg options, use replace_meals with diet veg. If the user says non-veg/nonveg/chicken/fish/meat or says they do not want vegetarian food, use replace_meals with diet nonveg. Do not mistake the word "non veg" for vegetarian.
 Rules: ONE action max, only when it does what the user asked; text first, ACTION last. Use today's date from APP STATE unless told otherwise. Keep replies under 110 words. Never invent weight numbers. For food logs, include realistic proteinG when the user names food; ask only if impossible. Reference protein logged vs target when relevant.`;
 };
 
@@ -479,10 +519,17 @@ function cleanDietMeals(profile,di,diet){
 }
 function localActionFromText(text){
   const x=String(text||"").toLowerCase(), date=dayDate(st.dayIdx);
-  if(/(delete|remove|clear|replace).*(non\s*-?veg|nonveg|chicken|fish|meat|egg)/.test(x)&&/(veg|vegetarian)/.test(x)) return {type:"replace_meals",payload:{date,diet:"veg"}};
-  if(/(veg|vegetarian).*(option|meal|food|diet)/.test(x)&&/(today|day|replace|change|add)/.test(x)) return {type:"replace_meals",payload:{date,diet:"veg"}};
-  if(/(egg).*(option|meal|food|diet)/.test(x)&&/(today|day|replace|change|add)/.test(x)) return {type:"replace_meals",payload:{date,diet:"egg"}};
-  if(/(delete|remove|clear).*(non\s*-?veg|nonveg|chicken|fish|meat)/.test(x)) return {type:"remove_meal",payload:{date,category:"nonveg"}};
+  const mealIntent=/(food|meal|diet|eat|breakfast|lunch|dinner|snack|option|plate|veg|vegetarian|chicken|fish|tuna|meat|egg|paneer|tofu|soya)/.test(x);
+  const todayIntent=/(today|day|replace|change|add|give|make|switch|want)/.test(x);
+  const removeNonVeg=/(delete|remove|clear).*(non\s*-?\s*veg|nonveg|non vegetarian|chicken|fish|tuna|meat|kebab|egg)/.test(x);
+  const wantsNonVeg=/(non\s*-?\s*veg|nonveg|non vegetarian|chicken|fish|tuna|meat|kebab)/.test(x)||/don'?t\s+want\s+(to\s+eat\s+)?(veg|vegetarian)/.test(x)||/no\s+(veg|vegetarian)/.test(x);
+  const wantsEgg=/\begg(s)?\b/.test(x)&&!/(chicken|fish|meat|non\s*-?\s*veg|nonveg)/.test(x);
+  const wantsVeg=!wantsNonVeg&&/(vegetarian|\bveg\b|plant\s*based|paneer|tofu|soya|dal|rajma|chole)/.test(x);
+  if(removeNonVeg&&/(veg|vegetarian|plant\s*based|paneer|tofu|soya|dal|rajma|chole)/.test(x)) return {type:"replace_meals",payload:{date,diet:"veg"}};
+  if(mealIntent&&todayIntent&&wantsNonVeg) return {type:"replace_meals",payload:{date,diet:"nonveg"}};
+  if(mealIntent&&todayIntent&&wantsEgg) return {type:"replace_meals",payload:{date,diet:"egg"}};
+  if(mealIntent&&todayIntent&&wantsVeg) return {type:"replace_meals",payload:{date,diet:"veg"}};
+  if(removeNonVeg) return {type:"remove_meal",payload:{date,category:"nonveg"}};
   return null;
 }
 function execAction(a){
@@ -536,8 +583,8 @@ async function sendAI(text){
     let action=null,clean=raw;
     if(m){clean=raw.slice(0,m.index).trim();try{action=JSON.parse(m[1]);}catch{}}
     const local=localActionFromText(userMsg.text);
-    if(!action&&local){action=local; if(!clean||clean===raw) clean="Done — I changed today's meals based on your request. ✅";}
-    if(action?.type==="remove_meal"&&/veg|vegetarian/i.test(userMsg.text)&&/add|replace|option/i.test(userMsg.text)) action={type:"replace_meals",payload:{date:dayDate(st.dayIdx),diet:"veg"}};
+    if(local?.type==="replace_meals"){action=local; if(!clean||clean===raw) clean="Done — I changed today's meals based on your request. ✅";}
+    else if(!action&&local){action=local; if(!clean||clean===raw) clean="Done — I changed today's meals based on your request. ✅";}
     if(!clean)clean="Done. ✅";
     if(action&&st.agent){execAction(action);set({aiMsgs:[...st.aiMsgs,{role:"ai",text:clean,time:new Date(),applied:action}],aiLoading:false},true);}
     else set({aiMsgs:[...st.aiMsgs,{role:"ai",text:clean,time:new Date(),action}],aiLoading:false},true);
@@ -740,13 +787,19 @@ function ProgressScreen(){
 
 function PlanScreen(){
   return `<main class="page">
-    <section class="hero"><span class="badge">Personalised Split</span><h1>THE PLAN</h1><p>${FOCUS_OPTIONS[st.profile.focus||'balanced']} · ${DIET_OPTIONS[st.profile.diet||'veg']} · ${EXERCISE_COUNT}+ exercise library</p></section>
-    ${PLAN.map((p,i)=>sect(`${p.name} — ${p.type}`,p.icon,`${p.exercises.length} ex`,`
-      ${p.exercises.map(e=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px"><span>${esc(e[0])}</span><span class="muted" style="font-family:'JetBrains Mono';font-size:12px">${esc(e[1])}</span></div>`).join('')||'<p class="muted">Rest day.</p>'}
-      <div class="info-box" style="margin-top:10px">${p.cardio}</div>
-      <h3 style="font-size:13px;margin:14px 0 8px;color:var(--accent)">Food plan</h3>
-      <div class="info-box" style="margin-bottom:10px">${p.foodTip||dietTip(st.profile)}</div>
-      ${(p.meals||[]).map(m=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px"><span>${esc(m[0])}</span><span class="muted" style="font-family:'JetBrains Mono';font-size:12px">${esc(m[1]||'planned meal')}${m[2]?` · ${m[2]}g protein`:''}</span></div>`).join('')}`)).join('')}
+    <section class="hero"><span class="badge">Personalised Split</span><h1>THE PLAN</h1><p>${FOCUS_OPTIONS[st.profile.focus||'balanced']} · ${DIET_OPTIONS[st.profile.diet||'veg']} · ${EXERCISE_COUNT}+ exercises · ${FOOD_COUNT}+ foods</p></section>
+    ${PLAN.map((p,i)=>{
+      const date=dayDate(i), log=getLog(st.L,date,i), exs=exsOf(i,log), meals=mealsOf(i,log);
+      const changedEx=!!log.overrideEx||!!(log.custEx||[]).length||!!(log.delEx||[]).length;
+      const changedMeals=!!log.overrideMeal||!!(log.custMeal||[]).length||!!(log.delMeal||[]).length;
+      return sect(`${p.name} — ${p.type}`,p.icon,`${exs.length} ex${changedEx?' · updated':''}`,`
+        ${changedEx?'<div class="warmup">Today/this week has custom exercises, so this plan page now mirrors the Today page.</div>':''}
+        ${exs.map(e=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px"><span>${esc(e.name)}</span><span class="muted" style="font-family:'JetBrains Mono';font-size:12px;text-align:right">${esc(e.sets)}</span></div>`).join('')||'<p class="muted">Rest day.</p>'}
+        <div class="info-box" style="margin-top:10px">${p.cardio}</div>
+        <h3 style="font-size:13px;margin:14px 0 8px;color:var(--accent)">Food plan ${changedMeals?'· updated':''}</h3>
+        <div class="info-box" style="margin-bottom:10px">${p.foodTip||dietTip(st.profile)}</div>
+        ${meals.map(m=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px"><span>${esc(m.name)}</span><span class="muted" style="font-family:'JetBrains Mono';font-size:12px;text-align:right">${esc(m.sets||'planned meal')}${m.proteinG?` · ${m.proteinG}g protein`:''}</span></div>`).join('')}`)
+    }).join('')}
   </main>`;
 }
 
@@ -868,13 +921,16 @@ function render(){
 function initPullRefresh(){
   let startY=0,dist=0,pulling=false;
   const el=()=>document.getElementById('pullRefresh');
-  window.addEventListener('touchstart',e=>{if(window.scrollY===0){startY=e.touches[0].clientY;dist=0;pulling=true;}},{passive:true});
-  window.addEventListener('touchmove',e=>{if(!pulling)return;dist=e.touches[0].clientY-startY;if(dist>8&&window.scrollY===0){const x=el();if(x){x.classList.add('show');x.textContent=dist>85?'Release to refresh':'Pull to refresh';x.style.transform=`translate(-50%,${Math.min(dist-70,38)}px)`;}}},{passive:true});
-  window.addEventListener('touchend',()=>{const x=el();if(pulling&&dist>85){if(x)x.textContent='Refreshing…';location.reload();return;}if(x){x.classList.remove('show');x.style.transform='translate(-50%,-70px)';}pulling=false;dist=0;},{passive:true});
+  const pageTop=()=>Math.max(window.scrollY||0,document.documentElement?.scrollTop||0,document.body?.scrollTop||0,(document.scrollingElement&&document.scrollingElement.scrollTop)||0)<=2;
+  const blocked=t=>t&&t.closest&&t.closest('.ai-panel, textarea, input, select');
+  window.addEventListener('touchstart',e=>{if(blocked(e.target))return;if(pageTop()){startY=e.touches[0].clientY;dist=0;pulling=true;}},{passive:true});
+  window.addEventListener('touchmove',e=>{if(!pulling)return;dist=e.touches[0].clientY-startY;if(dist>8&&pageTop()){const x=el();if(x){x.classList.add('show');x.textContent=dist>85?'Release to refresh':'Pull to refresh';x.style.transform=`translate(-50%,${Math.min(dist-70,42)}px)`;}}},{passive:true});
+  window.addEventListener('touchend',()=>{const x=el();if(pulling&&dist>85&&pageTop()){if(x)x.textContent='Refreshing…';setTimeout(()=>location.reload(),80);return;}if(x){x.classList.remove('show');x.style.transform='translate(-50%,-70px)';}pulling=false;dist=0;},{passive:true});
+  window.addEventListener('scroll',()=>{if(!pageTop()){const x=el();if(x)x.classList.remove('show');pulling=false;}},{passive:true});
 }
 
 // expose for inline handlers
-Object.assign(window,{set,toggle,mut,upBody,rmBody,sendAI,execAction,todayIdx,buildDayFocus,estimateProtein,removeIdsFromObj});
+Object.assign(window,{set,toggle,mut,upBody,rmBody,sendAI,execAction,todayIdx,buildDayFocus,estimateProtein,removeIdsFromObj,FOOD_COUNT});
 // st must be a LIVE getter — Object.assign would invoke and freeze it, so define explicitly
 Object.defineProperty(window,'st',{get(){return st;},configurable:true});
 

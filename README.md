@@ -11,8 +11,8 @@ No build step. No backend. No cost. Drop it on GitHub Pages and install it to yo
 - **Onboarding** asks weight, height, age, sex, activity, and goal.
 - **Calorie engine (100% offline math)** — Mifflin-St Jeor BMR → TDEE → goal-adjusted calories + protein/carb/fat macros + water target. Recalculates automatically as your logged weight changes.
 - **The Plan** — a personalised 7-day split generated from age, sex, weight, goal, diet preference, and training focus using a 200+ exercise library.
-- **AI agent** — a chat coach that can operate the app: mark exercises/habits done, replace today with legs/upper/no-chest/cardio focus, add/remove exercises, replace meals by diet preference, remove non-veg meals, log food with protein, adjust today's macro target, log weight, write notes, and navigate screens. Toggle **Agent mode** for instant actions, or off for Apply/Skip confirmation.
-- **Food + Protein Tracking** — phone-friendly food log, protein gained vs protein needed in real time, with manual protein entry or automatic estimates from food names.
+- **AI agent** — a chat coach that can operate the app: mark exercises/habits done, replace today with legs/upper/no-chest/cardio focus, add/remove exercises, replace meals by diet preference in both directions (veg ↔ egg ↔ non-veg), remove non-veg meals, log food with protein, adjust today's macro target, log weight, write notes, and navigate screens. Toggle **Agent mode** for instant actions, or off for Apply/Skip confirmation.
+- **Food + Protein Tracking** — phone-friendly food log, 240+ local food options, protein gained vs protein needed in real time, with manual protein entry or automatic estimates from food names.
 - **Body + Progress** — weight history, 7-day average, trend chart, weekly completion, training history.
 - **Installable PWA** — add to home screen, opens fullscreen, works offline (the AI chat needs internet).
 
@@ -42,7 +42,7 @@ Open **Settings → AI Provider**, pick one, paste the key, hit **Test Key**, do
 3. Open the Pages URL on your iPhone in **Safari**.
 4. Tap **Share → Add to Home Screen**. It now opens like a native app.
 
-That's it — same as the deploy your senior already had, but now it's the full app. If your phone still shows the old UI, close the app fully and pull down to refresh once; this version uses service worker cache `shred-v3-mobile-agent`.
+That's it — same as the deploy your senior already had, but now it's the full app. If your phone still shows the old UI, close the app fully and pull down to refresh once; this version uses service worker cache `shred-v4-plan-food-sync`.
 
 ---
 

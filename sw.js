@@ -1,7 +1,6 @@
-// Shred service worker — offline-first for the app shell.
-// The AI calls always hit the network (and fail gracefully offline);
-// everything else (UI, calorie engine) works with no connection.
-const CACHE = "shred-v3-mobile-agent";
+// Shred service worker — offline-ready app shell with network-first HTML updates.
+// AI calls always hit the network; app pages update faster after redeploys.
+const CACHE = "shred-v4-plan-food-sync";
 const ASSETS = [
   "./",
   "./index.html",
@@ -18,24 +17,42 @@ self.addEventListener("install", (e) => {
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  // Never cache AI provider calls — always go to network.
-  if (/api\.groq\.com|generativelanguage\.googleapis\.com|openrouter|together|api\.openai\.com/.test(url.host)) {
-    return; // default network behaviour
-  }
-  // Cache-first for our own assets, fall back to network.
-  if (e.request.method === "GET" && url.origin === location.origin) {
+
+  // Never cache AI provider calls.
+  if (/api\.groq\.com|generativelanguage\.googleapis\.com|openrouter|together|api\.openai\.com/.test(url.host)) return;
+
+  if (e.request.method !== "GET" || url.origin !== location.origin) return;
+
+  const isHtml = e.request.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html");
+
+  if (isHtml) {
+    // Network-first for the app shell so GitHub Pages redeploys appear quickly.
     e.respondWith(
-      caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
-        return res;
-      }).catch(() => caches.match("./index.html")))
+      fetch(e.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(e.request).then((hit) => hit || caches.match("./index.html")))
     );
+    return;
   }
+
+  // Cache-first for static assets.
+  e.respondWith(
+    caches.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
+      const copy = res.clone();
+      caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+      return res;
+    }).catch(() => caches.match("./index.html")))
+  );
 });
